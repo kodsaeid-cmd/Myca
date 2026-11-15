@@ -53,6 +53,7 @@ export function AdminDashboardScreen() {
   const [error, setError] = useState("");
   const [savingId, setSavingId] = useState("");
   const [notice, setNotice] = useState("");
+  const [csrfToken, setCsrfToken] = useState("");
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -61,7 +62,7 @@ export function AdminDashboardScreen() {
       const response = await fetch("/api/admin/dashboard", { cache: "no-store" });
       const result = await response.json().catch(() => ({}));
       if (response.status === 401) {
-        window.location.assign("/login/support-office?next=%2Fadmin");
+        window.location.assign("/admin/login/");
         return;
       }
       if (response.status === 403) {
@@ -72,6 +73,7 @@ export function AdminDashboardScreen() {
         setError(result.error || "دریافت داشبورد ممکن نشد.");
         return;
       }
+      setCsrfToken(typeof result.csrfToken === "string" ? result.csrfToken : "");
       setStats(result.stats ?? {});
       const rows = Array.isArray(result.orders) ? result.orders as Order[] : [];
       setOrders(rows);
@@ -118,7 +120,7 @@ export function AdminDashboardScreen() {
       }
       const response = await fetch("/api/admin/dashboard", {
         method: "PATCH",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", "x-csrf-token": csrfToken },
         body: JSON.stringify({
           id,
           status: edit.status,
@@ -138,6 +140,17 @@ export function AdminDashboardScreen() {
       setError("ارتباط با سرور هنگام ذخیره تغییرات قطع شد.");
     } finally {
       setSavingId("");
+    }
+  }
+
+  async function logout() {
+    try {
+      await fetch("/api/admin/logout", {
+        method: "POST",
+        headers: { "x-csrf-token": csrfToken }
+      });
+    } finally {
+      window.location.assign("/admin/login/");
     }
   }
 
@@ -161,9 +174,14 @@ export function AdminDashboardScreen() {
           <h1>مرکز مدیریت مایکا</h1>
           <p>مدیریت سفارش‌ها، مشتریان، پرداخت‌های هماهنگ‌شده و عملکرد وب‌سایت</p>
         </div>
-        <button type="button" className={styles.refresh} onClick={() => void loadDashboard()} disabled={loading}>
-          <RefreshCw size={16} /> به‌روزرسانی
-        </button>
+        <div className={styles.topbarActions}>
+          <button type="button" className={styles.refresh} onClick={() => void loadDashboard()} disabled={loading}>
+            <RefreshCw size={16} /> به‌روزرسانی
+          </button>
+          <button type="button" className={styles.logout} onClick={() => void logout()}>
+            خروج از پنل
+          </button>
+        </div>
       </header>
 
       {error && <p className={styles.error} role="alert">{error}</p>}

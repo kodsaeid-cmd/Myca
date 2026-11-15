@@ -20,7 +20,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: curl, mbstring
+          extensions: pdo_mysql, mbstring
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Lint
@@ -35,13 +35,15 @@ jobs:
           cp public/.htaccess out/.htaccess
           cp public/robots.txt out/robots.txt
           cp public/api/index.php out/api/index.php
+          cp public/api/.htaccess out/api/.htaccess
       - name: Package ParsPack preview
         if: github.ref == 'refs/heads/parspack-preview'
         run: |
           rm -rf package myca-parspack-preview.zip
-          mkdir -p package/public package/private
+          mkdir -p package/public package/private package/database
           cp -a out/. package/public/
           cp deploy/parspack/private/config.example.php package/private/config.example.php
+          cp deploy/parspack/database/schema.sql package/database/schema.sql
           cp docs/parspack-preview.md package/README.md
           (cd package && zip -qr ../myca-parspack-preview.zip .)
       - name: Upload ParsPack package

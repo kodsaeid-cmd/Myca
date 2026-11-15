@@ -1,11 +1,14 @@
 <?php
-/**
- * Copy this file to private/config.php and fill in the Supabase project values.
- * Keep this file outside the public document root. Never upload the service-role
- * key into public/, JavaScript, or a browser-visible environment variable.
- */
+declare(strict_types=1);
+
+// Copy this file to the private directory beside public/, as private/config.php.
+// The private/ directory must remain OUTSIDE the subdomain document root.
 return [
-    'supabase_url' => 'https://YOUR_PROJECT_REF.supabase.co',
-    'anon_key' => 'YOUR_SUPABASE_ANON_OR_PUBLISHABLE_KEY',
-    'service_role_key' => 'YOUR_SUPABASE_SERVICE_ROLE_SECRET',
+    'db_host' => 'localhost',
+    'db_name' => 'mycabl_myca_orders',
+    'db_user' => 'mycabl_myca_orders_user',
+    'db_password' => 'SET_A_STRONG_UNIQUE_DATABASE_PASSWORD',
+    'setup_token' => 'SET_A_RANDOM_ONE_TIME_SETUP_TOKEN_AT_LEAST_48_CHARS',
+    'session_secret' => 'SET_ANOTHER_INDEPENDENT_RANDOM_SECRET_AT_LEAST_64_CHARS',
+    'site_url' => 'https://myca-test.dandoonii.ir',
 ];

@@ -1,39 +1,61 @@
-# MYCA — ParsPack Preview Deployment
+# MYCA Phase One — ParsPack cPanel deployment
 
-This branch prepares the MYCA Next.js UI for static hosting on the existing ParsPack cPanel account, with PHP 8.3 API endpoints.
+## Target and boundaries
 
-## Deployment target
+- Test host: `https://myca-test.dandoonii.ir`
+- ParsPack shared Linux hosting, cPanel, PHP 8.3/PHP-FPM, MySQL, Apache
+- Cloudflare manages DNS; ParsPack origin IPv4 is `89.44.243.4`
+- Existing magazine and shop document roots remain untouched.
+- No Node.js runtime, SSH, or SFTP is required on the host.
 
-- Preview host: `myca-test.dandoonii.ir`
-- Web server: Apache/cPanel
-- PHP: 8.3 (requires cURL and mbstring)
-- Frontend: Next.js 15 static export
-- API: PHP 8.3 router under `/api/*`
-- Auth/data: existing Supabase project (PostgreSQL + Supabase Auth + PostgREST)
-- No changes to the existing magazine/shop document roots.
+## Runtime architecture
 
-The current MYCA backend is already defined by the Supabase migrations in `supabase/migrations`. This deployment does not move the data model into cPanel MySQL. PHP calls the Supabase Auth and REST APIs from the server so the service-role secret never reaches the browser.
+- Next.js 15 is built in GitHub Actions as a static export.
+- Apache serves the static files from the `public/` directory.
+- Apache rewrites `/api/*` to the PHP 8.3 API router at `/api/index.php`.
+- PHP uses PDO/MySQL for customers, orders, order history, admin sessions and analytics.
+- The MySQL schema is a new dedicated database; it does not reuse the magazine CMS or shop tables.
+- Customer profile is created automatically from the normalized mobile number when the first order is submitted. For privacy, each order is tracked with its unique reference plus the same mobile number. Customer OTP login is not enabled in this preview because no SMS provider has been configured.
+- Payment method remains `phone_coordination`; no payment gateway is connected.
 
-## Build
+## Build package
 
-GitHub Actions builds the static site and packages a ZIP artifact. The archive contains:
-
-- `public/`: static website output, including `.htaccess` and `api/index.php`
-- `private/config.example.php`: template for the server-only Supabase credentials
+GitHub Actions on branch `parspack-preview`:
+1. Installs Node 22 and PHP 8.3 with PDO MySQL, cURL and mbstring.
+2. Runs ESLint and PHP syntax validation.
+3. Builds the Next.js static export.
+4. Adds Apache `.htaccess`, PHP API and `robots.txt`.
+5. Creates a ZIP artifact containing:
+   - `public/`: static website + PHP API + Apache rules
+   - `private/config.example.php`: template only; no real credentials
+   - `database/schema.sql`: MySQL schema and service seed data
 
 ## cPanel setup
 
-1. Create the subdomain `myca-test.dandoonii.ir` with a new, empty document root. Do not point it at the magazine or shop folders.
-2. Set the subdomain to PHP 8.3. Confirm `curl` and `mbstring` extensions are enabled.
-3. Upload the ZIP contents so `public/` is the subdomain document root. Keep `private/` outside the document root.
-4. Copy `private/config.example.php` to `private/config.php` and fill in the existing Supabase URL, anon/publishable key, and service-role secret.
-5. Apply Supabase migrations in order: `202611150001_core_backend.sql`, `202611150002_caregiver_application.sql`, then `202611150003_orders_analytics_admin.sql`.
-6. Add the DNS A record for `myca-test` to the ParsPack origin IPv4 `89.44.243.4` in Cloudflare. Do not point the record to a Cloudflare proxy IP. Keep the record DNS-only during initial SSL issuance; enable proxy only after HTTPS is confirmed if desired.
-7. Issue/enable AutoSSL for the subdomain and verify `https://myca-test.dandoonii.ir/api/health`.
+1. Create `myca-test.dandoonii.ir` with a new document root, for example `/home/mycabl/myca-test.dandoonii.ir/public`. Do not reuse `public_html`, `mycablog.dandoonii.ir` or the shop root.
+2. Create a dedicated MySQL database and user in cPanel. Give the user all privileges on only this database.
+3. Import `database/schema.sql` into the new database through phpMyAdmin.
+4. Upload the package so the `public/` folder is the subdomain document root and `private/` is its sibling, outside the webroot.
+5. Copy `private/config.example.php` to `private/config.php`. Fill in the new database name/user/password, a random one-time setup token (48+ characters), an independent session secret (64+ characters), and the exact test host. Do not commit or share this file.
+6. Ensure PHP 8.3 has `pdo_mysql` and `mbstring` enabled. `curl` is not needed for the MySQL API.
+7. In Cloudflare add an A record `myca-test` -> `89.44.243.4`. Keep it DNS-only during initial AutoSSL issuance; do not use a Cloudflare edge IP as origin.
+8. Enable AutoSSL for `myca-test.dandoonii.ir`.
+9. Verify `/api/health` returns `{"status":"ok","backend":"PHP/MySQL"}`.
+10. Open `/admin/setup/` once, enter the private setup token and create the first admin username/password. After success, remove or rotate `setup_token` in the private config. Then use `/admin/login/`.
+11. Test package order submission, generated reference, tracking by reference+phone, admin status changes, phone-coordinated payment confirmation and analytics.
 
-## Important
+## Privacy and security
 
-- This is a test deployment; `robots.txt` blocks indexing.
-- Never put the service-role key in `public/`, source code, or Git.
-- The first-phase payment method remains phone coordination; there is no online payment gateway.
-- The existing `mycablog.dandoonii.ir` and shop roots must remain untouched.
+- The config file and DB credentials are outside the public document root.
+- Admin passwords are stored with PHP `password_hash`; admin sessions are Secure/HttpOnly/SameSite and have CSRF protection.
+- Login failures are rate-limited by a keyed hash of the client IP; raw IP is not stored.
+- Public tracking requires both the order reference and the mobile number used at submission.
+- Internal admin notes are not returned by the public tracking endpoint.
+- Analytics stores no IP address or raw user-agent.
+- Test host is noindex via `robots.txt` and page metadata.
+
+## Known phase-one limitations
+
+- Customer OTP and password login are not active until an SMS/authentication provider is selected and configured.
+- Customer profile is created in MySQL, but customer self-service order history is intentionally not exposed by phone number alone; each order is accessed using reference + phone.
+- Online payment, invoicing, contracts, caregiver matching and service delivery operations are out of scope for this phase.

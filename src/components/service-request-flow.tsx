@@ -72,8 +72,6 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
   const [packageId, setPackageId] = useState(initial.package ?? "");
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
-  const [authReady, setAuthReady] = useState(false);
-  const [authError, setAuthError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submittedOrder, setSubmittedOrder] = useState<{ id: string; reference: string; status: string; createdAt: string } | null>(null);
   const [recipientName, setRecipientName] = useState("");
@@ -139,41 +137,6 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
     const requestedShift = params.get("shift");
     if (requestedShift) setShift(requestedShift);
     setUrgent(params.get("urgent") === "1");
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-    async function checkCustomerSession() {
-      try {
-        const response = await fetch("/api/auth/session", { cache: "no-store" });
-        const result = await response.json().catch(() => ({}));
-        if (!active) return;
-        if (!response.ok) {
-          setAuthError(result.error || "بررسی حساب مشتری ممکن نشد.");
-          setAuthReady(true);
-          return;
-        }
-        if (!result.authenticated) {
-          const next = window.location.pathname + window.location.search;
-          window.location.assign("/login/receiver?next=" + encodeURIComponent(next));
-          return;
-        }
-        if (!Array.isArray(result.roles) || !result.roles.includes("family")) {
-          setAuthError("برای ثبت سفارش باید با حساب خدمت‌گیرنده وارد شوید.");
-          setAuthReady(true);
-          return;
-        }
-        if (typeof result.user?.phone === "string") setPhone(result.user.phone);
-        setAuthReady(true);
-      } catch {
-        if (active) {
-          setAuthError("ارتباط با سامانه ورود برقرار نشد. دوباره صفحه را بارگذاری کنید.");
-          setAuthReady(true);
-        }
-      }
-    }
-    void checkCustomerSession();
-    return () => { active = false; };
   }, []);
 
   function chooseCategory(nextId: string) {
@@ -249,11 +212,6 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
         })
       });
       const result = await response.json().catch(() => ({}));
-      if (response.status === 401) {
-        const next = window.location.pathname + window.location.search;
-        window.location.assign("/login/receiver?next=" + encodeURIComponent(next));
-        return;
-      }
       if (!response.ok || !result.request?.reference) {
         setError(result.error || "ثبت سفارش انجام نشد. لطفاً دوباره تلاش کنید.");
         return;
@@ -271,14 +229,6 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
     }
   }
 
-  if (!authReady) {
-    return <AppShell activeNav="requests"><div className={styles.container} dir="rtl"><div className={styles.emptyState}>در حال بررسی حساب مشتری…</div></div></AppShell>;
-  }
-
-  if (authError) {
-    return <AppShell activeNav="requests"><div className={styles.container} dir="rtl"><div className={styles.emptyState}><h2>ورود به سفارش‌گذاری ممکن نیست.</h2><p>{authError}</p><Link href="/login/receiver" className={styles.primaryButton}>ورود به حساب مشتری</Link></div></div></AppShell>;
-  }
-
   if (submittedOrder) {
     return (
       <AppShell activeNav="requests">
@@ -291,7 +241,7 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
             <div className={styles.reference}><span>کد پیگیری سفارش</span><strong>{submittedOrder.reference}</strong></div>
             <div className={styles.buttonColumn}>
               <Link href={"/track?reference=" + encodeURIComponent(submittedOrder.reference)} className={styles.primaryButton}>پیگیری وضعیت سفارش</Link>
-              <Link href="/requests" className={styles.secondaryButton}>مشاهده سفارش‌های من</Link>
+              <Link href="/catalogs" className={styles.secondaryButton}>مشاهده سایر پکیج‌ها</Link>
               <a href="tel:41124" className={styles.secondaryButton}><PhoneCall size={17} />تماس با مایکا · ۴۱۱۲۴</a>
               <Link href="/" className={styles.textLink}>بازگشت به صفحه اصلی</Link>
             </div>
@@ -504,128 +454,32 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
 }
 
 export function RequestDashboardScreen({ mode }: { mode: "requests" | "services" }) {
-  const [orders, setOrders] = useState<Array<Record<string, unknown>>>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState("");
   const isRequests = mode === "requests";
-
-  useEffect(() => {
-    let active = true;
-    async function loadOrders() {
-      if (!isRequests) { setLoaded(true); return; }
-      try {
-        const response = await fetch("/api/requests", { cache: "no-store" });
-        const result = await response.json().catch(() => ({}));
-        if (!active) return;
-        if (response.status === 401) {
-          window.location.assign("/login/receiver?next=%2Frequests");
-          return;
-        }
-        if (!response.ok) {
-          setError(result.error || "دریافت سفارش‌ها ممکن نشد.");
-          setOrders([]);
-        } else {
-          setOrders(Array.isArray(result.requests) ? result.requests : []);
-        }
-      } catch {
-        if (active) setError("ارتباط با سامانه برقرار نشد.");
-      } finally {
-        if (active) setLoaded(true);
-      }
-    }
-    void loadOrders();
-    return () => { active = false; };
-  }, [isRequests]);
-
-  function serviceTitleFor(categoryId: unknown, slug: unknown) {
-    const category = typeof categoryId === "string" ? categories[categoryId] : undefined;
-    const service = category?.services.find((item) => item.slug === slug);
-    return service?.title ?? (typeof slug === "string" ? slug : "خدمت مایکا");
-  }
-
-  function statusTitle(status: unknown) {
-    const labels: Record<string, string> = {
-      submitted: "در انتظار تماس مایکا",
-      triage: "در انتظار بررسی کارشناسی",
-      matching: "در حال بررسی و هماهنگی",
-      offered: "پیشنهاد خدمت آماده است",
-      accepted: "تأیید اولیه انجام شد",
-      quoted: "پیش‌فاکتور صادر شده",
-      contract_pending: "در انتظار نهایی‌سازی قرارداد",
-      confirmed: "خدمت تأیید شده",
-      in_service: "در حال ارائه خدمت",
-      completed: "تکمیل‌شده",
-      cancelled: "لغوشده",
-      rejected: "بسته‌شده"
-    };
-    return typeof status === "string" ? labels[status] ?? status : "در حال بررسی";
-  }
-
-  function paymentTitle(status: unknown) {
-    const labels: Record<string, string> = {
-      awaiting_contact: "در انتظار تماس مایکا",
-      awaiting_payment: "در انتظار پرداخت با هماهنگی",
-      paid: "پرداخت تأیید شده",
-      failed: "پرداخت ناموفق",
-      refunded: "مسترد شده",
-      not_required: "بدون نیاز به پرداخت"
-    };
-    return typeof status === "string" ? labels[status] ?? status : "در انتظار هماهنگی";
-  }
-
   return (
     <AppShell activeNav={isRequests ? "requests" : "services"}>
       <div className={styles.container} dir="rtl">
         <Link href="/" className={styles.backLink}><ArrowRight size={16} />بازگشت به خانه</Link>
         <header className={styles.header}>
-          <span className={styles.eyebrow}>{isRequests ? "سفارش‌های خانواده" : "مدیریت خدمت"}</span>
+          <span className={styles.eyebrow}>{isRequests ? "پیگیری سفارش‌های مایکا" : "مدیریت خدمت"}</span>
           <h1>{isRequests ? "سفارش‌های من" : "خدمات من"}</h1>
-          <p>{isRequests ? "سفارش‌های ثبت‌شده، کد پیگیری و وضعیت هماهنگی و پرداخت را اینجا مشاهده می‌کنید." : "خدمت فعال پس از تأیید سفارش و شروع ارائه خدمت در این بخش نمایش داده می‌شود."}</p>
+          <p>{isRequests
+            ? "برای حفظ حریم خصوصی، هر سفارش با کد پیگیری و شماره موبایل ثبت‌شده مشاهده می‌شود."
+            : "خدمت فعال پس از تأیید سفارش و شروع ارائه خدمت در این بخش نمایش داده می‌شود."}</p>
         </header>
-
-        {!loaded ? <div className={styles.emptyState}>در حال خواندن اطلاعات…</div>
-          : error ? <div className={styles.emptyState}><p>{error}</p></div>
-          : isRequests ? (
-            orders.length > 0 ? (
-              <section className={styles.draftList}>
-                {orders.map((item, index) => {
-                  const pricing = item.pricing_snapshot && typeof item.pricing_snapshot === "object"
-                    ? item.pricing_snapshot as Record<string, unknown> : {};
-                  const reference = String(item.reference ?? "");
-                  return (
-                    <article className={styles.draftCard} key={String(item.id ?? reference ?? index)}>
-                      <div className={styles.draftTopline}>
-                        <strong>{String(pricing.package_title ?? serviceTitleFor(item.category_id, item.service_slug))}</strong>
-                        <span className={styles.submittedStatus}>{statusTitle(item.status)}</span>
-                      </div>
-                      <p>{serviceTitleFor(item.category_id, item.service_slug)} · {String(item.city ?? "—")}</p>
-                      <div className={styles.summaryLine}><span>کد پیگیری</span><strong>{reference}</strong></div>
-                      <div className={styles.summaryLine}><span>تاریخ ثبت</span><strong>{typeof item.created_at === "string" ? new Date(item.created_at).toLocaleString("fa-IR") : "—"}</strong></div>
-                      <div className={styles.summaryLine}><span>وضعیت پرداخت</span><strong>{paymentTitle(item.payment_status)}</strong></div>
-                      <div className={styles.summaryLine}><span>روش پرداخت</span><strong>هماهنگی تلفنی با مایکا</strong></div>
-                      {typeof pricing.total_estimate_rial === "number" && (
-                        <div className={styles.summaryLine}><span>برآورد اولیه</span><strong>{formatMillions(pricing.total_estimate_rial / 10_000_000)} میلیون تومان</strong></div>
-                      )}
-                      <Link href={"/track?reference=" + encodeURIComponent(reference)} className={styles.primaryButton}>پیگیری سفارش</Link>
-                    </article>
-                  );
-                })}
-              </section>
-            ) : (
-              <div className={styles.emptyState}>
-                <span><ClipboardList size={28} /></span><h2>هنوز سفارشی ثبت نکرده‌اید.</h2>
-                <p>پکیج موردنظر را انتخاب کنید و سفارش خود را در مایکا ثبت کنید.</p>
-                <Link href="/catalogs" className={styles.primaryButton}>مشاهده پکیج‌ها</Link>
-              </div>
-            )
-          ) : (
-            <div className={styles.emptyState}>
-              <span><HeartHandshake size={28} /></span><h2>در حال حاضر خدمت فعالی برای نمایش وجود ندارد.</h2>
-              <p>پس از تأیید سفارش و شروع خدمت، وضعیت آن در این بخش نمایش داده می‌شود.</p>
-              <Link href="/requests" className={styles.secondaryButton}>مشاهده سفارش‌های من</Link>
-              <Link href="/catalogs" className={styles.primaryButton}>مشاهده پکیج‌ها</Link>
-            </div>
-          )}
+        <div className={styles.emptyState}>
+          <span><ClipboardList size={28} /></span>
+          <h2>{isRequests ? "سفارش خود را پیگیری کنید." : "هنوز خدمت فعالی برای نمایش وجود ندارد."}</h2>
+          <p>{isRequests
+            ? "کد پیگیری سفارش و شماره موبایلی را که هنگام ثبت سفارش وارد کرده‌اید، در صفحه پیگیری وارد کنید."
+            : "پس از تأیید سفارش و شروع خدمت، وضعیت آن در این بخش نمایش داده می‌شود."}</p>
+          {isRequests
+            ? <Link href="/track" className={styles.primaryButton}>پیگیری با کد سفارش</Link>
+            : <Link href="/catalogs" className={styles.primaryButton}>مشاهده پکیج‌ها</Link>}
+        </div>
+        {isRequests && <div className={styles.buttonColumn}>
+          <Link href="/catalogs" className={styles.secondaryButton}>مشاهده و سفارش پکیج‌ها</Link>
+          <a href="tel:41124" className={styles.secondaryButton}><PhoneCall size={16} />تماس با مایکا · ۴۱۱۲۴</a>
+        </div>}
       </div>
     </AppShell>
   );

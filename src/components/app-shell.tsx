@@ -35,7 +35,7 @@ export function AppShell({ children, activeNav = "home" }: { children: ReactNode
             </button>
             <div className="header-side header-brand">
               <Link href="/" className="brand-link" aria-label="صفحه اصلی مایکا"><Image src="https://mycaapp.com/mycalogo.png" alt="مایکا" width={40} height={40} unoptimized /></Link>
-              <Link href="/login/receiver" className="icon-button notification-button" aria-label="اعلان‌ها"><Bell size={21} /></Link>
+              <Link href="/track" className="icon-button notification-button" aria-label="اعلان‌ها"><Bell size={21} /></Link>
             </div>
           </header>
           <main className="page-main">{children}</main>
@@ -51,8 +51,8 @@ export function AppShell({ children, activeNav = "home" }: { children: ReactNode
 function BottomNavigation({ active }: { active: string }) {
   const items = [
     { key: "home", label: "خانه", href: "/", Icon: House },
-    { key: "requests", label: "سفارش‌ها", href: "/requests", Icon: ClipboardList },
-    { key: "messages", label: "پیام‌ها", href: "/login/receiver?next=/receiver/notifications", Icon: MessageCircle },
+    { key: "requests", label: "سفارش‌ها", href: "/track", Icon: ClipboardList },
+    { key: "messages", label: "پیام‌ها", href: "/track", Icon: MessageCircle },
     { key: "services", label: "خدمات من", href: "/services", Icon: HeartHandshake },
     { key: "profile", label: "پروفایل", href: "/account", Icon: UserRound }
   ];
