@@ -20,6 +20,8 @@ Copy `.env.example` to `.env.local`, create a Supabase project, and apply the SQ
 - Session lookup/refresh and logout endpoints.
 - Family request create/list API, with ownership checked against the verified Supabase user.
 - Atomic database RPC for request creation, initial status event and audit entry.
+- Caregiver application API for non-medical service skills; application submission atomically creates a pending profile, pending qualifications, the limited `caregiver_applicant` role and an audit record.
+- Provider application screen with an explicit pending-review state; the login flow offers the application path to a phone-verified family account.
 - PostgreSQL schema for profiles, roles, service catalog, caregiver verification, professional qualifications, provider organizations, availability, requests, matching, quotes, contracts, payments, active service sessions, support, communications, quality reviews and audit history.
 - RLS enabled for all business tables. Authenticated clients receive read-only grants; writes are mediated by server routes/service-role functions.
 - Public service catalog seeded from the existing MYCA route catalog. Services marked as licensed healthcare are explicitly separated from non-medical care.
@@ -37,8 +39,11 @@ The final product direction remains a direct two-sided platform. The data model 
 ## Important data boundaries
 
 - New phone-verified accounts receive the `family` role by database trigger. No client endpoint can assign staff, provider or caregiver roles.
-- Caregiver and licensed-provider access requires a separate application/review/approval workflow. A user cannot become verified by changing a client-side flag.
+- A family user may submit a non-medical caregiver application. This grants only `caregiver_applicant`, never `caregiver` or `licensed_provider`.
+- Identity-document upload, credential review, approval/rejection tools and staff role provisioning are not implemented yet. An applicant must not be considered matchable.
+- The initial caregiver application excludes services requiring a professional license. Those require a separate licensed-provider workflow and verified credentials.
 - Clinical service requests enter `triage` and carry a professional-licensing requirement; they are not automatically matched.
+- Future matching must require a verified caregiver profile, verified identity, an approved qualification for the exact service and valid availability. Licensed services additionally require a verified professional license or a verified licensed provider organization.
 - Price snapshots are intended to be computed and validated server-side. Friday attendance remains a manual quote item until the source pricing rules define its exact numeric basis.
 - Payment, e-signature, live caregiver matching, SMS vendor configuration, private document upload and operational staff provisioning are not activated by this migration alone.
 - Do not put diagnoses, identity numbers, payment card data or other highly sensitive information in free-text notes. Store required sensitive documents only in a private object-storage bucket with a controlled upload flow.

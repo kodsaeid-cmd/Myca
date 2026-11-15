@@ -25,6 +25,7 @@ export function LoginScreen({ role, next }: { role: string; next?: string }) {
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [showProviderApply, setShowProviderApply] = useState(false);
 
   async function submit() {
     if (!accepted) { setMessage("برای ادامه، شرایط استفاده را بپذیرید."); return; }
@@ -73,13 +74,18 @@ export function LoginScreen({ role, next }: { role: string; next?: string }) {
       const allowed = roleAccess[role] ?? [];
       const roles = Array.isArray(result.roles) ? result.roles as string[] : [];
       if (!allowed.some((requiredRole) => roles.includes(requiredRole))) {
-        setMessage("شماره شما تأیید شد، اما این حساب هنوز دسترسی ورود به بخش «" + title + "» را ندارد. دسترسی‌های حرفه‌ای پس از ثبت و بررسی درخواست همکاری فعال می‌شوند.");
+        if (role === "provider" && roles.includes("family")) {
+          setShowProviderApply(true);
+          setMessage("شماره شما تأیید شد. برای فعال‌کردن حساب خدمت‌دهنده، ابتدا درخواست همکاری و حوزه‌های فعالیت خود را ثبت کنید.");
+        } else {
+          setMessage("شماره شما تأیید شد، اما این حساب هنوز دسترسی ورود به بخش «" + title + "» را ندارد.");
+        }
         return;
       }
 
       const destination = next && next.startsWith("/") && !next.startsWith("//") && !next.includes("\\")
         ? next
-        : "/";
+        : role === "provider" ? "/provider/apply" : "/";
       window.location.assign(destination);
     } catch {
       setMessage("ارتباط با سرویس ورود برقرار نشد. دوباره تلاش کنید.");
@@ -138,6 +144,7 @@ export function LoginScreen({ role, next }: { role: string; next?: string }) {
       </div>}
 
       {message && <p className={message.includes("ارسال می‌شود") ? "form-message" : "form-message error"} role="status">{message}</p>}
+      {showProviderApply && <Link href="/provider/apply" className="login-apply-link">شروع ثبت درخواست همکاری خدمت‌دهنده</Link>}
       <Link href="/" className="back-home"><ArrowRight size={16} />بازگشت به صفحه اول مایکا</Link>
       <div className="login-trust"><ShieldCheck size={16} />اطلاعات ورود با کوکی امن و غیرقابل دسترسی از JavaScript نگهداری می‌شود.</div>
     </div>
