@@ -15,14 +15,6 @@ export const catalogData: Record<string, { title: string; description: string; p
       image: "https://springboot.asayesheiranian.ir/media/catalogs/pages/elder-home-" + n + ".png"
     }))
   },
-  "elders-pricing": {
-    title: "کاتالوگ خدمات سالمندی مایکا",
-    description: "راهنمای انتخاب پکیج مراقبت از سالمند در منزل و محاسبهٔ هزینه.",
-    pages: [5, 6, 7].map((n, i) => ({
-      title: "صفحه " + (i + 1),
-      image: "https://springboot.asayesheiranian.ir/media/catalogs/pages/elders-pricing-" + n + ".png"
-    }))
-  },
   "myca-products": {
     title: "کاتالوگ محصولات مایکا",
     description: "خدمات خانواده، مراقبتی و امور منزل: سالمندی، مادریار و کودک، و خدمات منزل و اداری.",
@@ -40,5 +32,6 @@ export const catalogData: Record<string, { title: string; description: string; p
 export const catalogCards = [
   { slug: "myca-products", title: "کاتالوگ محصولات مایکا", description: "خدمات خانواده، مراقبتی و امور منزل: سالمندی، مادریار و کودک، و خدمات منزل و اداری.", pages: "۱۰ صفحه" },
   { slug: "elder-home", title: "کاتالوگ مراقبت سالمند در منزل", description: "راهنمای انتخاب پکیج مناسب برای مراقبت از سالمند در منزل.", pages: "۵ صفحه" },
-  { slug: "elders-pricing", title: "کاتالوگ خدمات سالمندی مایکا", description: "راهنمای انتخاب پکیج مراقبت از سالمند در منزل و محاسبهٔ هزینه.", pages: "۳ صفحه" }
+  { slug: "elders-pricing", title: "قیمت‌گذاری خدمات سالمندی", description: "مقایسه پکیج‌های سالمندی و برآورد شفاف هزینه قرارداد.", pages: "محاسبه‌گر هزینه" },
+  { slug: "pedia", title: "قیمت‌گذاری مراقبت کودک", description: "پکیج‌های مراقبت از نوزاد، کودک و همراهی دوران بارداری.", pages: "محاسبه‌گر هزینه" }
 ];

@@ -6,7 +6,7 @@ import { catalogCards, catalogData } from "@/lib/catalog-data";
 export function CatalogsScreen() {
   return <AppShell>
     <div className="catalog-back"><Link href="/"><ArrowRight size={16} />بازگشت</Link></div>
-    <h1 className="catalog-page-title">کاتلوگ‌های خدمات ما</h1>
+    <h1 className="catalog-page-title">کاتالوگ‌های خدمات مایکا</h1>
     <p className="catalog-page-intro">یک کاتالوگ را انتخاب کنید تا نسخهٔ وب آن را ببینید.</p>
     <div className="catalog-card-list">{catalogCards.map((catalog) => <Link href={"/catalogs/" + catalog.slug} key={catalog.slug} className="catalog-card">
       <span className="catalog-icon"><BookOpen size={22} /></span>
