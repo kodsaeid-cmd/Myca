@@ -42,11 +42,35 @@ function getCategoryCatalog(categoryId: string, serviceSlug: string): PricingCat
 function shiftChoices(category: CategoryData, serviceSlug: string) {
   const service = category.services.find((item) => item.slug === serviceSlug);
   if (service?.options?.length) return service.options.map((item) => item.title);
-  if (category.id === "13") return ["ساعتی", "روزانه", "شبانه‌روزی", "موردی"];
-  if (category.id === "14") return ["ساعتی", "روزانه", "شبانه‌روزی"];
-  if (category.id === "17") return ["ساعتی", "روزانه", "نیاز به هماهنگی"];
-  if (category.id === "32") return ["موردی", "جلسه‌ای", "نیاز به هماهنگی"];
-  return ["روزانه", "شبانه", "شبانه‌روزی"];
+  if (category.id === "22" || category.id === "27") {
+    if (serviceSlug === "night") return ["شبانه"];
+    if (serviceSlug === "24h") return ["شبانه‌روزی"];
+    return ["روزانه"];
+  }
+  if (category.id === "12") {
+    if (serviceSlug === "child-care") return ["روزانه", "شبانه‌روزی"];
+    return ["نیاز به هماهنگی"];
+  }
+  if (category.id === "13") {
+    if (serviceSlug === "hourly-nurse") return ["ساعتی"];
+    if (serviceSlug === "one-time-nurse") return ["موردی"];
+    if (serviceSlug === "hospital-companion") return ["شبانه‌روزی"];
+    return ["نیاز به هماهنگی"];
+  }
+  if (category.id === "14") {
+    if (serviceSlug === "home-cook" || serviceSlug === "cooking-home") return ["روزانه"];
+    return ["ساعتی", "روزانه"];
+  }
+  if (category.id === "17") {
+    if (serviceSlug === "office-cleaning") return ["ساعتی"];
+    return ["نیاز به هماهنگی"];
+  }
+  if (category.id === "32") {
+    if (serviceSlug === "laboratory") return ["موردی"];
+    if (serviceSlug === "physiotherapy" || serviceSlug === "specialist-doctor") return ["جلسه‌ای"];
+    return ["نیاز به هماهنگی"];
+  }
+  return ["نیاز به هماهنگی"];
 }
 
 export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
@@ -90,7 +114,7 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
   const selectedPackage = catalog?.packages.find((item) => item.id === packageId);
   const shifts = useMemo(() => shiftChoices(category, serviceSlug), [category, serviceSlug]);
   const isChild = categoryId === "12" || categoryId === "27";
-  const isChildCare = isChild && serviceSlug !== "mother-companion";
+  const isChildCare = isChild && ["infant-nurse", "child-care", "daily", "night", "24h"].includes(serviceSlug);
   const isElder = categoryId === "11" || categoryId === "22";
   const commissionPercent = commissionRates.find((item) => item.months === months)?.percent ?? 0;
   const baseMonthlySalary = selectedPackage?.monthlySalaryMillion;
