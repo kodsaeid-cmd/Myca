@@ -181,7 +181,7 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
     const draft: RequestDraft = {
       id, createdAt: new Date().toISOString(), categoryId, categoryTitle: category.title,
       serviceSlug, serviceTitle: service.title, packageTitle: selectedPackage?.title,
-      shift, startDate, startTime, months, recipientName, recipientAge, dependency,
+      shift, startDate, startTime, months: catalog ? months : 0, recipientName, recipientAge, dependency,
       childCount: Number(childCount) || 1, notes, requesterName, phone, city, address,
       urgent, estimatedTotalMillion: estimatedTotal, status: "draft"
     };
@@ -327,12 +327,12 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
                   <button type="button" key={item} onClick={() => setShift(item)} className={shift === item ? styles.optionSelected : styles.optionButton}>{item}</button>
                 )}</div>
               </div>
-              <label className={styles.field}><span>مدت قرارداد درخواستی</span>
+              {catalog && <label className={styles.field}><span>مدت قرارداد درخواستی</span>
                 <select value={months} onChange={(event) => setMonths(Number(event.target.value))}>
                   {commissionRates.map((item) => <option key={item.months} value={item.months}>{formatMillions(item.months)} ماه</option>)}
-                </select></label>
-              <label className={styles.checkField}><input type="checkbox" checked={friday} onChange={(event) => setFriday(event.target.checked)} />
-                <span>به حضور مراقب در روز جمعه نیز نیاز دارم.</span></label>
+                </select></label>}
+              {catalog && <label className={styles.checkField}><input type="checkbox" checked={friday} onChange={(event) => setFriday(event.target.checked)} />
+                <span>به حضور مراقب در روز جمعه نیز نیاز دارم.</span></label>}
             </div>
             <p className={styles.hint}><Clock3 size={16} />تاریخ و ساعت نهایی پس از بررسی ظرفیت مراقبان و هماهنگی با خانواده قطعی می‌شود.</p>
           </section>
@@ -371,8 +371,10 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
               {isChildCare && <div className={styles.summaryLine}><span>تعداد کودک</span><strong>{formatMillions(Number(childCount))}</strong></div>}
               <div className={styles.summaryLine}><span>شیفت</span><strong>{shift}</strong></div>
               <div className={styles.summaryLine}><span>شروع</span><strong>{startDate} · {startTime}</strong></div>
-              <div className={styles.summaryLine}><span>مدت</span><strong>{formatMillions(months)} ماه</strong></div>
-              {friday && <div className={styles.summaryLine}><span>جمعه</span><strong>نیاز به حضور دارد</strong></div>}
+              {catalog && <div className={styles.summaryLine}><span>مدت</span><strong>{formatMillions(months)} ماه</strong></div>}
+              {friday && catalog && <div className={styles.summaryLine}><span>جمعه</span><strong>نیاز به حضور دارد</strong></div>}
+              {urgent && <div className={styles.summaryLine}><span>اولویت</span><strong>فوری · نیازمند تأیید مایکا</strong></div>}
+              {notes.trim() && <div className={styles.summaryLine}><span>توضیحات</span><strong>{notes}</strong></div>}
               <div className={styles.summaryLine}><span>محل خدمت</span><strong>{city}، {address}</strong></div>
               <div className={styles.summaryLine}><span>درخواست‌کننده</span><strong>{requesterName} · {phone}</strong></div>
             </div>
@@ -456,7 +458,8 @@ export function RequestDashboardScreen({ mode }: { mode: "requests" | "services"
                   <div className={styles.draftTopline}><strong>{draft.serviceTitle}</strong><span className={styles.localStatus}>پیش‌نویس محلی</span></div>
                   <p>{draft.categoryTitle}{draft.packageTitle ? " · " + draft.packageTitle : ""}</p>
                   <div className={styles.summaryLine}><span>شروع درخواستی</span><strong>{draft.startDate} · {draft.startTime}</strong></div>
-                  <div className={styles.summaryLine}><span>مدت</span><strong>{formatMillions(draft.months)} ماه</strong></div>
+                  {draft.months > 0 && <div className={styles.summaryLine}><span>مدت</span><strong>{formatMillions(draft.months)} ماه</strong></div>}
+                  {draft.urgent && <div className={styles.summaryLine}><span>اولویت</span><strong>فوری · نیازمند تأیید</strong></div>}
                   {typeof draft.estimatedTotalMillion === "number" && <div className={styles.summaryLine}><span>برآورد اولیه</span><strong>{formatMillions(draft.estimatedTotalMillion)} میلیون تومان</strong></div>}
                   <div className={styles.summaryLine}><span>کد پیش‌نویس</span><strong>{draft.id}</strong></div>
                   <a href="tel:41124" className={styles.secondaryButton}><PhoneCall size={16} />تماس برای ارسال و بررسی درخواست</a>
