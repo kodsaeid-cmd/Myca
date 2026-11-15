@@ -15,8 +15,8 @@ export function CategoryScreen({ category }: { category: CategoryData }) {
 
   function selectService(service: ServiceItem) {
     if (service.href) { router.push(service.href); return; }
-    if (service.options?.length) setSelectedService(service);
-    else setAuthOpen(true);
+    if (service.requiresAuthOnSelect) { setAuthOpen(true); return; }
+    setSelectedService(service);
   }
 
   return <AppShell>
@@ -37,11 +37,11 @@ export function CategoryScreen({ category }: { category: CategoryData }) {
     </section>
 
     <section className="category-services">
-      {selectedService ? selectedService.options?.map((option) => <button type="button" className="category-service-row" key={option.title} onClick={() => setAuthOpen(true)}>
+      {selectedService ? (selectedService.options?.length ? selectedService.options.map((option) => <button type="button" className="category-service-row" key={option.title} onClick={() => setAuthOpen(true)}>
         <span className="category-service-icon"><Image src={"https://mycaapp.com/myca-icons/" + selectedService.icon} alt="" width={42} height={42} unoptimized /></span>
         <span className="category-service-copy"><strong>{selectedService.title} {option.title}</strong><small>{option.description}</small></span>
         <span className="row-chevron"><ChevronLeft size={20} /></span>
-      </button>) : category.services.map((service) => <button type="button" className="category-service-row" key={service.slug} onClick={() => selectService(service)}>
+      </button>) : <div className="category-service-row"><span className="category-service-copy"><strong>{selectedService.title}</strong><small>{selectedService.description}</small></span></div>) : category.services.map((service) => <button type="button" className="category-service-row" key={service.slug} onClick={() => selectService(service)}>
         <span className="category-service-icon"><Image src={"https://mycaapp.com/myca-icons/" + service.icon} alt="" width={42} height={42} unoptimized /></span>
         <span className="category-service-copy"><strong>{service.title}</strong><small>{service.description}</small></span>
         <span className="row-chevron"><ChevronLeft size={20} /></span>
