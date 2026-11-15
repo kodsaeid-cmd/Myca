@@ -53,7 +53,7 @@ export function CategoryScreen({ category }: { category: CategoryData }) {
       <span className="category-action-copy" dir="rtl"><strong>ثبت درخواست فوری</strong><small>{category.urgentLabel}</small></span>
       <ChevronLeft size={20} className="action-chevron" />
     </button>
-    <a href="tel:02141124" className="category-action support-action" dir="ltr">
+    <a href="tel:41124" className="category-action support-action" dir="ltr">
       <span className="category-action-icon"><Headset size={22} /></span>
       <span className="category-action-copy" dir="rtl"><strong>سوالی دارید؟</strong><small>با مشاوران مایکا صحبت کنید</small></span>
       <ChevronLeft size={20} className="action-chevron" />

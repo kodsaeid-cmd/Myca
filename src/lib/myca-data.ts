@@ -110,7 +110,7 @@ export const homeServiceCards = [
 ];
 
 export const menuItems = [
-  { label: "تماس با ما", href: "tel:02141124", icon: "phone" },
+  { label: "تماس با ما", href: "tel:41124", icon: "phone" },
   { label: "پرستار بیمار", href: "/category/13", icon: "heart" },
   { label: "پزشکی و پیراپزشکی", href: "/category/32", icon: "activity" },
   { label: "خدمات شرکتی", href: "/category/17", icon: "building" },

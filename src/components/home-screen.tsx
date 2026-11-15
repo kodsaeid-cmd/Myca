@@ -65,7 +65,7 @@ export function HomeScreen() {
       </Link>)}</div>
     </section>
 
-    <a href="tel:02141124" className="home-action-card" dir="ltr">
+    <a href="tel:41124" className="home-action-card" dir="ltr">
       <span className="action-pill"><ChevronLeft size={16} />مشاوره با مایکا</span>
       <span className="action-copy" dir="rtl"><strong>نمی‌دانید کدام خدمت مناسب است؟</strong><small>با مشاوران مایکا صحبت کنید.</small></span>
       <span className="action-icon"><Headset size={22} /></span>

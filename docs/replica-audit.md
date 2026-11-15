@@ -41,3 +41,12 @@ Captured against the public website on 2026-11-15.
 ## Source-of-truth note
 
 The live public site is the fidelity target for its currently visible pages. The supplied MYCA Design Language v1.0 remains the canonical reference for future product surfaces. The live site's observed public palette and typography differ from the design-language tokens; this difference is intentional and documented rather than silently reconciled.
+
+
+## Pricing catalog implementation — 2026-11-15
+
+- Added a web-based elderly pricing catalog at /catalogs/elders-pricing using Elders Pricing 02.pdf.
+- Added a web-based child-care pricing catalog at /catalogs/pedia using pedia 01.pdf.
+- Implemented the monthly wage packages and the one-time commission schedule shown in the source PDFs.
+- Added a contract-term calculator and source notes. Night shift, Friday attendance and additional-child surcharges are disclosed but excluded from the base estimate where the source does not provide a complete numeric calculation basis.
+- Updated shared color tokens to the MYCA Design Language v1.0 palette and set the mobile content rail to 393px.

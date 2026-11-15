@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   Activity, Bell, BookOpen, CalendarDays, ChevronDown, ChevronLeft, ClipboardList,
-  FileText, Heart, History, House, MapPin, Menu, MessageCircle, Phone, Star,
+  FileText, Heart, HeartHandshake, History, House, MapPin, Menu, MessageCircle, Phone, Star,
   Ticket, UserRound, Users, X, LocateFixed, Search, Building2
 } from "lucide-react";
 import { menuItems } from "@/lib/myca-data";
@@ -20,7 +20,7 @@ const iconMap: Record<string, ComponentType<{ size?: number; strokeWidth?: numbe
 export function AppShell({ children, activeNav = "home" }: { children: ReactNode; activeNav?: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [locationOpen, setLocationOpen] = useState(false);
-  const [location, setLocation] = useState("تهران، شهرک غرب");
+  const [location, setLocation] = useState("انتخاب محل خدمت");
 
   return (
     <div className="mobile-app-desktop-container">
@@ -53,6 +53,7 @@ function BottomNavigation({ active }: { active: string }) {
     { key: "home", label: "خانه", href: "/", Icon: House },
     { key: "requests", label: "درخواست‌ها", href: "/login/receiver?next=/receiver/requests", Icon: ClipboardList },
     { key: "messages", label: "پیام‌ها", href: "/login/receiver?next=/receiver/notifications", Icon: MessageCircle },
+    { key: "services", label: "خدمات من", href: "/login/receiver?next=/receiver/services", Icon: HeartHandshake },
     { key: "profile", label: "پروفایل", href: "/login/receiver?next=/receiver/profile", Icon: UserRound }
   ];
   return <nav className="bottom-navigation" aria-label="ناوبری اصلی"><ul>{items.map(({ key, label, href, Icon }) => (
@@ -66,7 +67,7 @@ function MenuDrawer({ onClose }: { onClose: () => void }) {
       <aside className="drawer-panel" role="dialog" aria-modal="true" aria-label="منو" onMouseDown={(event) => event.stopPropagation()}>
         <div className="drawer-heading"><strong>منو</strong><button type="button" className="icon-button" onClick={onClose} aria-label="بستن منو"><X size={21} /></button></div>
         <nav className="drawer-list">
-          <Link href="tel:02141124" className="drawer-item" onClick={onClose}><Phone size={18} /><span>تماس با ما</span><ChevronLeft size={16} /></Link>
+          <Link href="tel:41124" className="drawer-item" onClick={onClose}><Phone size={18} /><span>تماس با ما</span><ChevronLeft size={16} /></Link>
           <div className="drawer-section-label">درباره ما</div>
           {menuItems.slice(1).map((item) => {
             const Icon = iconMap[item.icon] || FileText;
@@ -104,7 +105,7 @@ function LocationDialog({ currentLocation, onClose, onSave }: { currentLocation:
           <button type="button" onClick={() => { setAddress("استان تهران"); setSearch(""); }}><strong>استان تهران</strong><span>استان تهران، ایران</span></button>
         </div>}
         <button type="button" className="current-location-button" onClick={useCurrentLocation}><LocateFixed size={17} />موقعیت فعلی من</button>
-        <div className="map-placeholder"><MapPin size={24} /><span>در حال بارگذاری نقشه…</span></div>
+        <div className="map-placeholder"><MapPin size={24} /><span>نقشه در این نسخه فعال نیست؛ نشانی را دستی وارد کنید.</span></div>
         <div className="selected-location"><span>موقعیت انتخاب‌شده</span><strong>{address}</strong></div>
         <label className="field-label" htmlFor="location-address">نشانی محل خدمت</label>
         <input id="location-address" className="text-field" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="مثلاً تهران، شهرک غرب" />

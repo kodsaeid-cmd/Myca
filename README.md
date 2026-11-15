@@ -7,7 +7,7 @@ A faithful, independently implemented replica of the public MYCA web experience.
 - Next.js 15 App Router
 - React 19 + TypeScript
 - Persian-first RTL interface
-- CSS-based replica styling, with a mobile-first 448px content rail
+- CSS-based replica styling, with a mobile-first 393px content rail
 - Lucide icons and original publicly accessible MYCA image assets
 
 ## Implemented in the first pass
@@ -19,7 +19,8 @@ A faithful, independently implemented replica of the public MYCA web experience.
 - Public service categories: elderly care, child care, patient care, home services, corporate services, specialist care
 - Elder-independent and infant-nurse service detail pages
 - Receiver, provider, collaborator, recruitment-partner and support-office login shells
-- Catalog list and web page viewers, with PDF download routes redirected to the original public catalog PDFs
+- Catalog list and web page viewers
+- Interactive elderly-care and child-care pricing catalogs with contract-term commission estimator
 
 ## Development
 
@@ -32,7 +33,7 @@ npm run dev
 
 The live public website at https://mycaapp.com is the visual and behavioral reference for the public-page replica. Publicly visible copy, navigation, interactions and image assets are being recreated; private server-side behavior and authenticated data are not copied.
 
-The supplied `MYCA_DESIGN_LANGUAGE_v1.0` document remains the canonical design-system reference for future product surfaces. Where the live public website visibly differs, this replica follows the live site for public-page fidelity and records the difference for later reconciliation.
+The supplied MYCA Design Language v1.0 is the canonical design-system reference for product surfaces. Shared tokens now use its documented palette. Where the live public website visibly differs, this replica follows the live site for public-page fidelity and records the difference for later reconciliation.
 
 See [docs/replica-audit.md](docs/replica-audit.md) for inspected routes, interaction notes and remaining gaps.
 
