@@ -90,7 +90,7 @@ export function OrderTrackingScreen({ initialReference = "" }: { initialReferenc
             <div className={styles.reference}><span>کد پیگیری</span><strong>{String(order.reference)}</strong></div>
             <div className={styles.summaryLine}><span>سفارش‌دهنده</span><strong>{String(order.requesterName ?? "—")}</strong></div>
             <div className={styles.summaryLine}><span>پکیج / خدمت</span><strong>{String(pricing.package_title ?? order.serviceSlug ?? "—")}</strong></div>
-            {order.recipientName && <div className={styles.summaryLine}><span>دریافت‌کننده خدمت</span><strong>{String(order.recipientName)}</strong></div>}
+            {typeof order.recipientName === "string" && order.recipientName && <div className={styles.summaryLine}><span>دریافت‌کننده خدمت</span><strong>{order.recipientName}</strong></div>}
             <div className={styles.summaryLine}><span>شهر</span><strong>{String(order.city ?? "—")}</strong></div>
             <div className={styles.summaryLine}><span>وضعیت سفارش</span><strong>{orderStatus(order.status)}</strong></div>
             <div className={styles.summaryLine}><span>وضعیت پرداخت</span><strong>{paymentStatus(order.paymentStatus)}</strong></div>

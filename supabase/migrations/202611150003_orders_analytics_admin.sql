@@ -41,6 +41,20 @@ begin
   end if;
 end $$;
 
+-- Backfill profiles for accounts that existed before the auth trigger was installed.
+insert into public.profiles (id, phone)
+select id, phone from auth.users
+on conflict (id) do nothing;
+
+-- Existing accounts without any assigned role are treated as customer accounts.
+insert into public.user_roles (user_id, role)
+select p.id, 'family'
+from public.profiles p
+where not exists (
+  select 1 from public.user_roles ur where ur.user_id = p.id
+)
+on conflict (user_id, role) do nothing;
+
 create index if not exists care_requests_payment_status_created_idx
   on public.care_requests (payment_status, created_at desc);
 
