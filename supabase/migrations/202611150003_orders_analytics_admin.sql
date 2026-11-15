@@ -259,6 +259,27 @@ begin
     'link_clicks_total', (select count(*)::integer from public.site_events where event_type = 'link_click'),
     'unique_visitors_total', (select count(distinct visitor_id)::integer from public.site_events),
     'sessions_total', (select count(distinct session_id)::integer from public.site_events),
+    'package_orders', (
+      select coalesce(
+        jsonb_agg(
+          jsonb_build_object(
+            'package_id', package_sales.package_id,
+            'package_title', package_sales.package_title,
+            'orders', package_sales.orders
+          ) order by package_sales.orders desc
+        ),
+        '[]'::jsonb
+      )
+      from (
+        select
+          pricing_snapshot->>'package_id' as package_id,
+          coalesce(pricing_snapshot->>'package_title', pricing_snapshot->>'package_id') as package_title,
+          count(*)::integer as orders
+        from public.care_requests
+        where nullif(pricing_snapshot->>'package_id', '') is not null
+        group by pricing_snapshot->>'package_id', pricing_snapshot->>'package_title'
+      ) package_sales
+    ),
     'top_pages', (
       select coalesce(
         jsonb_agg(jsonb_build_object('path', page.path, 'views', page.views) order by page.views desc),

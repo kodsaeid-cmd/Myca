@@ -200,6 +200,20 @@ export function AdminDashboardScreen() {
         </div>
       </section>
 
+      <section className={styles.analytics}>
+        <div className={styles.sectionHeading}>
+          <div><span className={styles.eyebrow}>PACKAGE PERFORMANCE</span><h2>تعداد سفارش هر پکیج</h2></div>
+          <span className={styles.muted}>بر اساس سفارش‌های ثبت‌شده</span>
+        </div>
+        {Array.isArray(stats.package_orders) && (stats.package_orders as Array<Record<string, unknown>>).length > 0
+          ? <div className={styles.topPages}>{(stats.package_orders as Array<Record<string, unknown>>).map((item) => (
+              <div className={styles.topPage} key={String(item.package_id)}>
+                <span>{String(item.package_title ?? item.package_id)}</span><strong>{fa(item.orders)} سفارش</strong>
+              </div>
+            ))}</div>
+          : <p className={styles.muted}>هنوز سفارشی برای پکیج‌ها ثبت نشده است.</p>}
+      </section>
+
       <section className={styles.orders}>
         <div className={styles.sectionHeading}>
           <div><span className={styles.eyebrow}>ORDER MANAGEMENT</span><h2>سفارش‌های اخیر</h2></div>
