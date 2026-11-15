@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { commissionRates, pricingCatalogs } from "@/lib/pricing-data";
 import { getAuthContext } from "@/lib/server/auth";
 import {
-  BackendNotConfiguredError, isSameOriginRequest, readJson, supabaseAdminFetch
+  BackendNotConfiguredError, isSameOriginRequest, normalizePhone, readJson, supabaseAdminFetch
 } from "@/lib/server/supabase";
 
 export const dynamic = "force-dynamic";
@@ -185,6 +185,7 @@ export async function POST(request: NextRequest) {
     const categoryId = textValue(body.categoryId, 8, true);
     const serviceSlug = textValue(body.serviceSlug, 80, true);
     const requesterName = textValue(body.requesterName, 120, true);
+    const contactPhone = textValue(body.phone, 32, true);
     const recipientName = textValue(body.recipientName, 120);
     const city = textValue(body.city, 100, true);
     const province = textValue(body.province, 100);
@@ -204,8 +205,13 @@ export async function POST(request: NextRequest) {
     if (!categoryId || !/^\d{1,3}$/.test(categoryId) || !serviceSlug || !/^[a-z0-9-]+$/.test(serviceSlug)) {
       return NextResponse.json({ error: "دسته خدمت یا نوع خدمت معتبر نیست." }, { status: 422 });
     }
-    if (!requesterName || !city || !addressLine || !shift || !startAt || !allowedShifts.has(shift)) {
+    if (!requesterName || !contactPhone || !city || !addressLine || !shift || !startAt || !allowedShifts.has(shift)) {
       return NextResponse.json({ error: "اطلاعات ضروری درخواست را کامل کنید." }, { status: 422 });
+    }
+    const normalizedContactPhone = normalizePhone(contactPhone);
+    const normalizedAccountPhone = normalizePhone(auth.user.phone);
+    if (!normalizedContactPhone || normalizedContactPhone !== normalizedAccountPhone) {
+      return NextResponse.json({ error: "شماره تماس باید با شماره تأییدشده حساب شما یکسان باشد." }, { status: 422 });
     }
     if (recipientAge !== null && (!Number.isInteger(recipientAge) || recipientAge < 0 || recipientAge > 120)) {
       return NextResponse.json({ error: "سن خدمت‌گیرنده معتبر نیست." }, { status: 422 });

@@ -16,12 +16,13 @@ const mainCategoryIds = ["11", "12", "13", "14", "17", "32"];
 
 export type RequestDraft = {
   id: string; createdAt: string; categoryId: string; categoryTitle: string;
-  serviceSlug: string; serviceTitle: string; packageTitle?: string;
-  shift: string; startDate: string; startTime: string; months: number;
+  serviceSlug: string; serviceTitle: string; packageTitle?: string; packageId?: string;
+  shift: string; startDate: string; startTime: string; months: number; fridayRequired: boolean;
   recipientName: string; recipientAge: string; dependency: string;
   childCount: number; notes: string; requesterName: string; phone: string;
   city: string; address: string; urgent: boolean;
-  estimatedTotalMillion?: number; status: "draft";
+  estimatedTotalMillion?: number; status: "draft" | "submitted";
+  submittedReference?: string; submittedStatus?: string;
 };
 
 type InitialRequest = { category?: string; service?: string; package?: string; shift?: string; urgent?: string };
@@ -180,8 +181,8 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
     const id = "MYCA-D-" + Date.now().toString().slice(-7);
     const draft: RequestDraft = {
       id, createdAt: new Date().toISOString(), categoryId, categoryTitle: category.title,
-      serviceSlug, serviceTitle: service.title, packageTitle: selectedPackage?.title,
-      shift, startDate, startTime, months: catalog ? months : 0, recipientName, recipientAge, dependency,
+      serviceSlug, serviceTitle: service.title, packageTitle: selectedPackage?.title, packageId: selectedPackage?.id,
+      shift, startDate, startTime, months: catalog ? months : 0, fridayRequired: friday, recipientName, recipientAge, dependency,
       childCount: Number(childCount) || 1, notes, requesterName, phone, city, address,
       urgent, estimatedTotalMillion: estimatedTotal, status: "draft"
     };
@@ -428,19 +429,133 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
 
 export function RequestDashboardScreen({ mode }: { mode: "requests" | "services" }) {
   const [drafts, setDrafts] = useState<RequestDraft[]>([]);
+  const [serverRequests, setServerRequests] = useState<Array<Record<string, unknown>>>([]);
   const [loaded, setLoaded] = useState(false);
+  const [sendingId, setSendingId] = useState("");
+  const [sendMessages, setSendMessages] = useState<Record<string, { text: string; kind: "success" | "error" }>>({});
 
   useEffect(() => {
-    try {
-      const stored = JSON.parse(sessionStorage.getItem(DRAFTS_KEY) ?? "[]");
-      setDrafts(Array.isArray(stored) ? stored as RequestDraft[] : []);
-    } catch {
-      setDrafts([]);
+    async function loadDashboard() {
+      try {
+        const stored = JSON.parse(sessionStorage.getItem(DRAFTS_KEY) ?? "[]");
+        setDrafts(Array.isArray(stored) ? stored as RequestDraft[] : []);
+      } catch {
+        setDrafts([]);
+      }
+
+      if (mode === "requests") {
+        try {
+          const response = await fetch("/api/requests", { cache: "no-store" });
+          if (response.ok) {
+            const result = await response.json();
+            setServerRequests(Array.isArray(result.requests) ? result.requests : []);
+          }
+        } catch {
+          setServerRequests([]);
+        }
+      }
+      setLoaded(true);
     }
-    setLoaded(true);
-  }, []);
+    void loadDashboard();
+  }, [mode]);
+
+  async function submitDraft(draft: RequestDraft) {
+    if (draft.status === "submitted" || sendingId) return;
+    setSendingId(draft.id);
+    setSendMessages((current) => ({ ...current, [draft.id]: { text: "", kind: "error" } }));
+    try {
+      const startAt = new Date(`${draft.startDate}T${draft.startTime}:00`).toISOString();
+      const response = await fetch("/api/requests", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          categoryId: draft.categoryId,
+          serviceSlug: draft.serviceSlug,
+          packageId: draft.packageId ?? null,
+          shift: draft.shift,
+          startAt,
+          durationMonths: draft.months > 0 ? draft.months : null,
+          fridayRequired: draft.fridayRequired,
+          childrenCount: draft.childCount,
+          recipientName: draft.recipientName,
+          recipientAge: draft.recipientAge || null,
+          dependency: draft.dependency || null,
+          notes: draft.notes,
+          requesterName: draft.requesterName,
+          phone: draft.phone,
+          city: draft.city,
+          address: draft.address,
+          urgent: draft.urgent
+        })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        window.location.assign("/login/receiver?next=%2Frequests");
+        return;
+      }
+      if (!response.ok || !result.request?.reference) {
+        setSendMessages((current) => ({
+          ...current,
+          [draft.id]: { text: result.error || "ثبت درخواست انجام نشد. اطلاعات اتصال سامانه را بررسی کنید.", kind: "error" }
+        }));
+        return;
+      }
+
+      const updatedDrafts = drafts.map((item) => item.id === draft.id
+        ? { ...item, status: "submitted" as const, submittedReference: result.request.reference, submittedStatus: result.request.status }
+        : item
+      );
+      setDrafts(updatedDrafts);
+      sessionStorage.setItem(DRAFTS_KEY, JSON.stringify(updatedDrafts));
+      setServerRequests((current) => [{
+        id: result.request.id,
+        reference: result.request.reference,
+        category_id: draft.categoryId,
+        service_slug: draft.serviceSlug,
+        requested_shift: draft.shift,
+        requested_start_at: startAt,
+        status: result.request.status,
+        city: draft.city,
+        created_at: result.request.createdAt
+      }, ...current]);
+      setSendMessages((current) => ({
+        ...current,
+        [draft.id]: { text: "درخواست شما با کد " + result.request.reference + " در سامانه مایکا ثبت شد.", kind: "success" }
+      }));
+    } catch {
+      setSendMessages((current) => ({
+        ...current,
+        [draft.id]: { text: "ارتباط با سامانه برقرار نشد. پیش‌نویس شما همچنان روی همین دستگاه محفوظ است.", kind: "error" }
+      }));
+    } finally {
+      setSendingId("");
+    }
+  }
 
   const isRequests = mode === "requests";
+  function serviceTitleFor(categoryId: unknown, slug: unknown) {
+    const category = typeof categoryId === "string" ? categories[categoryId] : undefined;
+    const service = category?.services.find((item) => item.slug === slug);
+    return service?.title ?? (typeof slug === "string" ? slug : "خدمت مایکا");
+  }
+  function statusTitle(status: unknown) {
+    const labels: Record<string, string> = {
+      submitted: "ثبت‌شده برای بررسی",
+      triage: "در انتظار بررسی تخصصی",
+      matching: "در حال یافتن مراقب مناسب",
+      offered: "معرفی مراقب",
+      accepted: "مراقب پذیرفته‌شده",
+      quoted: "پیش‌فاکتور صادرشده",
+      contract_pending: "در انتظار تأیید قرارداد",
+      confirmed: "آماده شروع خدمت",
+      in_service: "در حال ارائه خدمت",
+      completed: "تکمیل‌شده",
+      cancelled: "لغوشده",
+      rejected: "ردشده"
+    };
+    return typeof status === "string" ? labels[status] ?? status : "در حال بررسی";
+  }
+
   return (
     <AppShell activeNav={isRequests ? "requests" : "services"}>
       <div className={styles.container} dir="rtl">
@@ -448,34 +563,83 @@ export function RequestDashboardScreen({ mode }: { mode: "requests" | "services"
         <header className={styles.header}>
           <span className={styles.eyebrow}>{isRequests ? "درخواست‌های خانواده" : "مدیریت خدمت"}</span>
           <h1>{isRequests ? "درخواست‌های من" : "خدمات من"}</h1>
-          <p>{isRequests ? "پیش‌نویس‌هایی که در همین نشست مرورگر ذخیره کرده‌اید." : "خدمت فعال پس از تأیید قرارداد و شروع خدمت در این بخش نمایش داده می‌شود."}</p>
+          <p>{isRequests ? "درخواست‌های ثبت‌شده در مایکا و پیش‌نویس‌های ذخیره‌شده در این نشست." : "خدمت فعال پس از تأیید قرارداد و شروع خدمت در این بخش نمایش داده می‌شود."}</p>
         </header>
-        {!loaded ? <div className={styles.emptyState}>در حال خواندن اطلاعات همین نشست…</div>
-          : isRequests && drafts.length > 0 ? (
-            <div className={styles.draftList}>
-              {drafts.map((draft) => (
-                <article className={styles.draftCard} key={draft.id}>
-                  <div className={styles.draftTopline}><strong>{draft.serviceTitle}</strong><span className={styles.localStatus}>پیش‌نویس محلی</span></div>
-                  <p>{draft.categoryTitle}{draft.packageTitle ? " · " + draft.packageTitle : ""}</p>
-                  <div className={styles.summaryLine}><span>شروع درخواستی</span><strong>{draft.startDate} · {draft.startTime}</strong></div>
-                  {draft.months > 0 && <div className={styles.summaryLine}><span>مدت</span><strong>{formatMillions(draft.months)} ماه</strong></div>}
-                  {draft.urgent && <div className={styles.summaryLine}><span>اولویت</span><strong>فوری · نیازمند تأیید</strong></div>}
-                  {typeof draft.estimatedTotalMillion === "number" && <div className={styles.summaryLine}><span>برآورد اولیه</span><strong>{formatMillions(draft.estimatedTotalMillion)} میلیون تومان</strong></div>}
-                  <div className={styles.summaryLine}><span>کد پیش‌نویس</span><strong>{draft.id}</strong></div>
-                  <a href="tel:41124" className={styles.secondaryButton}><PhoneCall size={16} />تماس برای ارسال و بررسی درخواست</a>
-                </article>
-              ))}
-            </div>
-          ) : isRequests ? (
-            <div className={styles.emptyState}>
-              <span><ClipboardList size={28} /></span><h2>هنوز پیش‌نویسی در این نشست ندارید.</h2>
-              <p>درخواست خدمت را مرحله‌به‌مرحله آماده کنید؛ پیش‌نویس آن در همین تب مرورگر قابل مشاهده خواهد بود.</p>
-              <Link href="/request/new" className={styles.primaryButton}>شروع درخواست جدید</Link>
-            </div>
+
+        {!loaded ? <div className={styles.emptyState}>در حال خواندن اطلاعات…</div>
+          : isRequests ? (
+            <>
+              {serverRequests.length > 0 && (
+                <section className={styles.section}>
+                  <div className={styles.sectionSubheading}><h3>درخواست‌های ثبت‌شده در مایکا</h3><span>{formatMillions(serverRequests.length)} درخواست</span></div>
+                  <div className={styles.draftList}>
+                    {serverRequests.map((item, index) => (
+                      <article className={styles.draftCard} key={String(item.id ?? item.reference ?? index)}>
+                        <div className={styles.draftTopline}>
+                          <strong>{serviceTitleFor(item.category_id, item.service_slug)}</strong>
+                          <span className={styles.submittedStatus}>{statusTitle(item.status)}</span>
+                        </div>
+                        <div className={styles.summaryLine}><span>کد درخواست</span><strong>{String(item.reference ?? "—")}</strong></div>
+                        <div className={styles.summaryLine}><span>شهر</span><strong>{String(item.city ?? "—")}</strong></div>
+                        <div className={styles.summaryLine}><span>شیفت</span><strong>{String(item.requested_shift ?? "—")}</strong></div>
+                        <div className={styles.summaryLine}><span>زمان شروع</span><strong>{typeof item.requested_start_at === "string" ? new Date(item.requested_start_at).toLocaleString("fa-IR") : "—"}</strong></div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {drafts.filter((draft) => draft.status === "draft").length > 0 && (
+                <section className={styles.section}>
+                  <div className={styles.sectionSubheading}><h3>پیش‌نویس‌های این دستگاه</h3><span>{formatMillions(drafts.filter((draft) => draft.status === "draft").length)} پیش‌نویس</span></div>
+                  <div className={styles.draftList}>
+                    {drafts.filter((draft) => draft.status === "draft").map((draft) => (
+                      <article className={styles.draftCard} key={draft.id}>
+                        <div className={styles.draftTopline}><strong>{draft.serviceTitle}</strong><span className={styles.localStatus}>پیش‌نویس محلی</span></div>
+                        <p>{draft.categoryTitle}{draft.packageTitle ? " · " + draft.packageTitle : ""}</p>
+                        <div className={styles.summaryLine}><span>شروع درخواستی</span><strong>{draft.startDate} · {draft.startTime}</strong></div>
+                        {draft.months > 0 && <div className={styles.summaryLine}><span>مدت</span><strong>{formatMillions(draft.months)} ماه</strong></div>}
+                        {draft.urgent && <div className={styles.summaryLine}><span>اولویت</span><strong>فوری · نیازمند تأیید</strong></div>}
+                        {typeof draft.estimatedTotalMillion === "number" && <div className={styles.summaryLine}><span>برآورد اولیه</span><strong>{formatMillions(draft.estimatedTotalMillion)} میلیون تومان</strong></div>}
+                        <div className={styles.summaryLine}><span>کد پیش‌نویس</span><strong>{draft.id}</strong></div>
+                        {sendMessages[draft.id]?.text && <p className={sendMessages[draft.id].kind === "success" ? styles.successMessage : styles.errorMessage}>{sendMessages[draft.id].text}</p>}
+                        <button type="button" className={styles.primaryButton} onClick={() => void submitDraft(draft)} disabled={Boolean(sendingId)}>
+                          {sendingId === draft.id ? "در حال ارسال…" : "ارسال درخواست به سامانه مایکا"}
+                        </button>
+                        <a href="tel:41124" className={styles.secondaryButton}><PhoneCall size={16} />نیاز به راهنمایی؟ تماس با مایکا</a>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {drafts.filter((draft) => draft.status === "submitted").length > 0 && (
+                <section className={styles.section}>
+                  <div className={styles.sectionSubheading}><h3>پیش‌نویس‌های ارسال‌شده</h3><span>{formatMillions(drafts.filter((draft) => draft.status === "submitted").length)} مورد</span></div>
+                  <div className={styles.draftList}>
+                    {drafts.filter((draft) => draft.status === "submitted").map((draft) => (
+                      <article className={styles.draftCard} key={draft.id}>
+                        <div className={styles.draftTopline}><strong>{draft.serviceTitle}</strong><span className={styles.submittedStatus}>{statusTitle(draft.submittedStatus)}</span></div>
+                        <div className={styles.summaryLine}><span>کد درخواست مایکا</span><strong>{draft.submittedReference}</strong></div>
+                        <p>درخواست در سامانه ثبت شده است. تأیید ظرفیت و معرفی مراقب در مرحله بررسی انجام می‌شود.</p>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {serverRequests.length === 0 && drafts.length === 0 && (
+                <div className={styles.emptyState}>
+                  <span><ClipboardList size={28} /></span><h2>هنوز درخواستی ثبت نکرده‌اید.</h2>
+                  <p>درخواست خدمت را مرحله‌به‌مرحله آماده کنید؛ سپس می‌توانید آن را به سامانه مایکا ارسال کنید.</p>
+                  <Link href="/request/new" className={styles.primaryButton}>شروع درخواست جدید</Link>
+                </div>
+              )}
+            </>
           ) : (
             <div className={styles.emptyState}>
               <span><HeartHandshake size={28} /></span><h2>در حال حاضر خدمت فعالی برای نمایش وجود ندارد.</h2>
-              <p>این نسخه هنوز به قراردادها، مراقبان تخصیص‌یافته، حضور و غیاب یا گزارش‌های خدمت واقعی متصل نیست. پس از اتصال سامانه عملیاتی، وضعیت خدمت در همین بخش نمایش داده می‌شود.</p>
+              <p>این نسخه هنوز به تخصیص قطعی مراقب، حضور و غیاب یا گزارش‌های خدمت واقعی متصل نیست. پس از تأیید قرارداد و شروع خدمت، وضعیت آن در این بخش نمایش داده می‌شود.</p>
               <Link href="/requests" className={styles.secondaryButton}>مشاهده درخواست‌های من</Link>
               <Link href="/request/new" className={styles.primaryButton}>ثبت درخواست جدید</Link>
             </div>
