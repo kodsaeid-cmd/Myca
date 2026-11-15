@@ -18,7 +18,7 @@ export const categories: Record<string, CategoryData> = {
     headline: "با آرامش،\nدر کنار عزیزان شما", subheadline: "مراقبت حرفه‌ای، امن و قابل اعتماد در منزل",
     urgentLabel: "پرستار سالمند",
     services: [
-      { slug: "independent", title: "سالمند مستقل", description: "همراهی برای سالمند مستقل در منزل", icon: "elderly-rocker.svg", href: "/category/22", options: elderShifts },
+      { slug: "independent", title: "سالمند مستقل", description: "همراهی برای سالمند مستقل در منزل", icon: "elderly-rocker.svg", href: "/package-ui/?category=elder", options: elderShifts },
       { slug: "semi-dependent", title: "سالمند نیمه‌وابسته", description: "مراقبت متناسب با نیاز نیمه‌وابسته", icon: "home-care.svg", options: elderShifts },
       { slug: "dependent", title: "سالمند وابسته", description: "مراقبت تخصصی، بازتوانی و همراهی", icon: "elder-medical-care.svg", options: elderShifts }
     ]
@@ -104,8 +104,8 @@ export const categories: Record<string, CategoryData> = {
 };
 
 export const homeServiceCards = [
-  { title: "مراقب سالمند", href: "/category/11", icon: "elderly-rocker.svg" },
-  { title: "مراقب کودک", href: "/category/12", icon: "mother-child.svg" },
+  { title: "مراقب سالمند", href: "/package-ui/?category=elder", icon: "elderly-rocker.svg" },
+  { title: "مراقب کودک", href: "/package-ui/?category=child", icon: "mother-child.svg" },
   { title: "خدمات و امور منزل", href: "/category/14", icon: "home-cleaning.svg" }
 ];
 
@@ -130,16 +130,16 @@ export const menuItems = [
 ];
 
 export const homeSearchSuggestions = [
-  { title: "سالمند مستقل", subtitle: "پرستار سالمند", icon: "elderly-rocker.svg", href: "/category/22", group: "sub" },
-  { title: "سالمند نیمه‌وابسته", subtitle: "پرستار سالمند", icon: "home-care.svg", href: "/category/11", group: "sub" },
-  { title: "سالمند وابسته", subtitle: "پرستار سالمند", icon: "elder-medical-care.svg", href: "/category/11", group: "sub" },
-  { title: "سالمند نیمه‌وابسته روزانه", subtitle: "سالمند نیمه‌وابسته", icon: "home-care.svg", href: "/category/11", group: "shift" },
-  { title: "سالمند نیمه‌وابسته شبانه", subtitle: "سالمند نیمه‌وابسته", icon: "home-care.svg", href: "/category/11", group: "shift" },
-  { title: "سالمند نیمه‌وابسته شبانه‌روزی", subtitle: "سالمند نیمه‌وابسته", icon: "home-care.svg", href: "/category/11", group: "shift" },
-  { title: "سالمند وابسته روزانه", subtitle: "سالمند وابسته", icon: "elder-medical-care.svg", href: "/category/11", group: "shift" },
-  { title: "سالمند وابسته شبانه", subtitle: "سالمند وابسته", icon: "elder-medical-care.svg", href: "/category/11", group: "shift" },
-  { title: "سالمند وابسته شبانه‌روزی", subtitle: "سالمند وابسته", icon: "elder-medical-care.svg", href: "/category/11", group: "shift" },
-  { title: "سالمند مستقل روزانه", subtitle: "سالمند مستقل", icon: "elderly-rocker.svg", href: "/category/22", group: "shift" },
-  { title: "سالمند مستقل شبانه", subtitle: "سالمند مستقل", icon: "elderly-rocker.svg", href: "/category/22", group: "shift" },
-  { title: "سالمند مستقل شبانه‌روزی", subtitle: "سالمند مستقل", icon: "elderly-rocker.svg", href: "/category/22", group: "shift" }
+  { title: "سالمند مستقل", subtitle: "پرستار سالمند", icon: "elderly-rocker.svg", href: "/package-ui/?category=elder", group: "sub" },
+  { title: "سالمند نیمه‌وابسته", subtitle: "پرستار سالمند", icon: "home-care.svg", href: "/package-ui/?category=elder", group: "sub" },
+  { title: "سالمند وابسته", subtitle: "پرستار سالمند", icon: "elder-medical-care.svg", href: "/package-ui/?category=elder", group: "sub" },
+  { title: "سالمند نیمه‌وابسته روزانه", subtitle: "سالمند نیمه‌وابسته", icon: "home-care.svg", href: "/package-ui/?category=elder", group: "shift" },
+  { title: "سالمند نیمه‌وابسته شبانه", subtitle: "سالمند نیمه‌وابسته", icon: "home-care.svg", href: "/package-ui/?category=elder", group: "shift" },
+  { title: "سالمند نیمه‌وابسته شبانه‌روزی", subtitle: "سالمند نیمه‌وابسته", icon: "home-care.svg", href: "/package-ui/?category=elder", group: "shift" },
+  { title: "سالمند وابسته روزانه", subtitle: "سالمند وابسته", icon: "elder-medical-care.svg", href: "/package-ui/?category=elder", group: "shift" },
+  { title: "سالمند وابسته شبانه", subtitle: "سالمند وابسته", icon: "elder-medical-care.svg", href: "/package-ui/?category=elder", group: "shift" },
+  { title: "سالمند وابسته شبانه‌روزی", subtitle: "سالمند وابسته", icon: "elder-medical-care.svg", href: "/package-ui/?category=elder", group: "shift" },
+  { title: "سالمند مستقل روزانه", subtitle: "سالمند مستقل", icon: "elderly-rocker.svg", href: "/package-ui/?category=elder", group: "shift" },
+  { title: "سالمند مستقل شبانه", subtitle: "سالمند مستقل", icon: "elderly-rocker.svg", href: "/package-ui/?category=elder", group: "shift" },
+  { title: "سالمند مستقل شبانه‌روزی", subtitle: "سالمند مستقل", icon: "elderly-rocker.svg", href: "/package-ui/?category=elder", group: "shift" }
 ];

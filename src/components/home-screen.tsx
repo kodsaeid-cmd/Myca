@@ -19,8 +19,8 @@ export function HomeScreen() {
     if (normalizedQuery.includes("سالمند")) return homeSearchSuggestions;
     const all = [
       ...homeSearchSuggestions,
-      { title: "پرستار نوزاد", subtitle: "مراقبت از نوزاد تا دو سالگی", icon: "mother-child.svg", href: "/category/27", group: "sub" },
-      { title: "مادریار", subtitle: "مراقبت از مادر", icon: "mother-child.svg", href: "/category/12", group: "sub" },
+      { title: "پرستار نوزاد", subtitle: "مراقبت از نوزاد تا دو سالگی", icon: "mother-child.svg", href: "/package-ui/?category=child", group: "sub" },
+      { title: "مادریار", subtitle: "مراقبت از مادر", icon: "mother-child.svg", href: "/package-ui/?category=child", group: "sub" },
       { title: "نظافت منزل", subtitle: "خدمات و امور منزل", icon: "cleaning-spray.svg", href: "/category/14", group: "sub" },
       { title: "کمک‌بهیار", subtitle: "پرستاری و مراقبت بیمار", icon: "certified-nurse.svg", href: "/category/13", group: "sub" }
     ];
