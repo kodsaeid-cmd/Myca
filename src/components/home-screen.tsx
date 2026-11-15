@@ -71,9 +71,14 @@ export function HomeScreen() {
       <span className="action-icon"><Headset size={22} /></span>
     </a>
 
-    <Link href="/login/receiver?next=/receiver/requests" className="home-action-card request-card" dir="ltr">
+    <Link href="/request/new" className="home-action-card request-card" dir="ltr">
+      <span className="action-pill"><ChevronLeft size={16} />شروع</span>
+      <span className="action-copy" dir="rtl"><strong>ثبت درخواست خدمت</strong><small>نیازتان را ثبت کنید تا مسیر مناسب خدمت مشخص شود.</small></span>
+      <span className="action-icon"><ClipboardList size={21} /></span>
+    </Link>
+    <Link href="/requests" className="home-action-card request-card" dir="ltr">
       <span className="action-pill"><ChevronLeft size={16} />مشاهده</span>
-      <span className="action-copy" dir="rtl"><strong>درخواست‌های من</strong><small>پیگیری، جزئیات و وضعیت درخواست‌های شما</small></span>
+      <span className="action-copy" dir="rtl"><strong>درخواست‌های من</strong><small>پیش‌نویس‌ها و پیگیری درخواست‌ها</small></span>
       <span className="action-icon"><ClipboardList size={21} /></span>
     </Link>
   </AppShell>;

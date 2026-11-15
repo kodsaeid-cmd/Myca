@@ -5,18 +5,17 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, BookOpen, ChevronLeft, Headset, Zap } from "lucide-react";
-import { AppShell, AuthGateModal } from "@/components/app-shell";
+import { AppShell } from "@/components/app-shell";
 import type { CategoryData, ServiceItem } from "@/lib/myca-data";
 
 export function CategoryScreen({ category }: { category: CategoryData }) {
   const router = useRouter();
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
-  const [authOpen, setAuthOpen] = useState(false);
 
   function selectService(service: ServiceItem) {
     if (service.href) { router.push(service.href); return; }
-    if (service.requiresAuthOnSelect || !service.options?.length) { setAuthOpen(true); return; }
-    setSelectedService(service);
+    if (service.options?.length) { setSelectedService(service); return; }
+    router.push(`/request/new?category=${category.id}&service=${service.slug}`);
   }
 
   return <AppShell>
@@ -37,7 +36,7 @@ export function CategoryScreen({ category }: { category: CategoryData }) {
     </section>
 
     <section className="category-services">
-      {selectedService ? (selectedService.options?.length ? selectedService.options.map((option) => <button type="button" className="category-service-row" key={option.title} onClick={() => setAuthOpen(true)}>
+      {selectedService ? (selectedService.options?.length ? selectedService.options.map((option) => <button type="button" className="category-service-row" key={option.title} onClick={() => router.push(`/request/new?category=${category.id}&service=${selectedService.slug}&shift=${encodeURIComponent(option.title)}`)}>
         <span className="category-service-icon"><Image src={"https://mycaapp.com/myca-icons/" + selectedService.icon} alt="" width={42} height={42} unoptimized /></span>
         <span className="category-service-copy"><strong>{selectedService.title} {option.title}</strong><small>{option.description}</small></span>
         <span className="row-chevron"><ChevronLeft size={20} /></span>
@@ -54,7 +53,7 @@ export function CategoryScreen({ category }: { category: CategoryData }) {
       <ChevronLeft size={20} className="action-chevron" />
     </Link>}
 
-    <button type="button" className="category-action urgent-action" dir="ltr" onClick={() => setAuthOpen(true)}>
+    <button type="button" className="category-action urgent-action" dir="ltr" onClick={() => router.push(`/request/new?category=${category.id}&urgent=1`)}>
       <span className="category-action-icon urgent-icon"><Zap size={22} /></span>
       <span className="category-action-copy" dir="rtl"><strong>ثبت درخواست فوری</strong><small>{category.urgentLabel}</small></span>
       <ChevronLeft size={20} className="action-chevron" />
@@ -64,6 +63,5 @@ export function CategoryScreen({ category }: { category: CategoryData }) {
       <span className="category-action-copy" dir="rtl"><strong>سوالی دارید؟</strong><small>با مشاوران مایکا صحبت کنید</small></span>
       <ChevronLeft size={20} className="action-chevron" />
     </a>
-    {authOpen && <AuthGateModal onClose={() => setAuthOpen(false)} />}
   </AppShell>;
 }

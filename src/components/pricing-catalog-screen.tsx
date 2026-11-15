@@ -161,13 +161,15 @@ export function PricingCatalogScreen({ catalog }: { catalog: PricingCatalog }) {
             <p className="pricing-calculator-note">
               این برآورد بر پایه حقوق ماهانه پایه پکیج محاسبه شده است. هزینه شیفت شبانه‌روزی، حضور در روز جمعه و در کاتالوگ کودک، کودک اضافه، جداگانه به مبلغ قرارداد افزوده می‌شوند و در عدد بالا لحاظ نشده‌اند.
             </p>
-            <a href="tel:41124" className="pricing-primary-cta"><PhoneCall size={18} />استعلام و نهایی‌سازی قرارداد با مایکا</a>
+            <Link href={`/request/new?category=${catalog.kind === "child" ? "12" : "11"}`} className="pricing-primary-cta"><PhoneCall size={18} />ثبت درخواست این خدمت</Link>
+            <a href="tel:41124" className="pricing-secondary-contact">سؤال دارید؟ تماس با مایکا · ۴۱۱۲۴</a>
           </section>
         ) : (
           <section className="pricing-quote-card">
             <strong>برای این خدمت، قیمت‌گذاری اختصاصی انجام می‌شود.</strong>
             <p>شرایط خانواده و نیازهای خدمت را با کارشناسان مایکا مطرح کنید تا خدمت متناسب طراحی و هزینه آن اعلام شود.</p>
-            <a href="tel:41124" className="pricing-primary-cta"><PhoneCall size={18} />تماس با مایکا · ۴۱۱۲۴</a>
+            <Link href={`/request/new?category=${catalog.kind === "child" ? "12" : "11"}`} className="pricing-primary-cta"><PhoneCall size={18} />ثبت درخواست خدمت اختصاصی</Link>
+            <a href="tel:41124" className="pricing-secondary-contact">تماس با مایکا · ۴۱۱۲۴</a>
           </section>
         )}
 
