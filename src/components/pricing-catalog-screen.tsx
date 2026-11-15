@@ -49,24 +49,34 @@ export function PricingCatalogScreen({ catalog }: { catalog: PricingCatalog }) {
 
         <p className="pricing-intro">{catalog.summary}</p>
 
-        <section className="pricing-section">
-          <div className="pricing-section-heading">
-            <span>{catalog.kind === "child" ? "خدمات پایه مراقبت کودک" : "خدمات پایه مشترک"}</span>
-            <h2>{catalog.kind === "child" ? "در پکیج‌های مراقبت کودک چه خدمات پایه‌ای ارائه می‌شود؟" : "در تمام پکیج‌ها چه خدماتی ارائه می‌شود؟"}</h2>
-          </div>
-          <div className="pricing-shared-grid">
-            {catalog.sharedServices.map((service, index) => {
-              const Icon = sharedIcons[index % sharedIcons.length];
-              return (
-                <article className="pricing-shared-card" key={service.title}>
-                  <span className="pricing-shared-icon"><Icon size={19} /></span>
-                  <strong>{service.title}</strong>
-                  <p>{service.description}</p>
-                </article>
-              );
-            })}
-          </div>
-        </section>
+        {catalog.kind === "child" && selectedPackage.id === "pregnancy" ? (
+          <section className="pricing-section">
+            <div className="pricing-section-heading">
+              <span>پکیج ویژه مادر</span>
+              <h2>همراهی غیرپزشکی در دوران بارداری</h2>
+              <p>این خدمت متناسب با نیاز مادر و خانواده تعریف می‌شود و جایگزین مراقبت یا خدمات پزشکی نیست.</p>
+            </div>
+          </section>
+        ) : (
+          <section className="pricing-section">
+            <div className="pricing-section-heading">
+              <span>{catalog.kind === "child" ? "خدمات پایه مراقبت کودک" : "خدمات پایه مشترک"}</span>
+              <h2>{catalog.kind === "child" ? "در پکیج‌های مراقبت کودک چه خدمات پایه‌ای ارائه می‌شود؟" : "در تمام پکیج‌ها چه خدماتی ارائه می‌شود؟"}</h2>
+            </div>
+            <div className="pricing-shared-grid">
+              {catalog.sharedServices.map((service, index) => {
+                const Icon = sharedIcons[index % sharedIcons.length];
+                return (
+                  <article className="pricing-shared-card" key={service.title}>
+                    <span className="pricing-shared-icon"><Icon size={19} /></span>
+                    <strong>{service.title}</strong>
+                    <p>{service.description}</p>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         <section className="pricing-section">
           <div className="pricing-section-heading">
