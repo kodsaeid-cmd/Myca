@@ -46,6 +46,7 @@ function myca_db(): PDO {
             PDO::ATTR_EMULATE_PREPARES => false,
         ]
     );
+    $pdo->exec("SET time_zone = '+00:00'");
     return $pdo;
 }
 
@@ -315,7 +316,7 @@ function build_pricing_snapshot(string $categoryId, string $serviceSlug, ?string
 }
 
 function create_reference(PDO $pdo): string {
-    $month = gmdate('Ym');
+    $month = (new DateTimeImmutable('now', new DateTimeZone('Asia/Tehran')))->format('Ym');
     $query = $pdo->prepare(
         'INSERT INTO myca_reference_sequences (month_key, last_number) VALUES (?, LAST_INSERT_ID(1))
          ON DUPLICATE KEY UPDATE last_number = LAST_INSERT_ID(last_number + 1)'
@@ -535,11 +536,12 @@ function admin_dashboard(string $method): never {
         $id = filter_var($body['id'] ?? null, FILTER_VALIDATE_INT);
         $status = is_string($body['status'] ?? null) ? $body['status'] : null;
         $paymentStatus = is_string($body['paymentStatus'] ?? null) ? $body['paymentStatus'] : null;
-        $paidAmount = array_key_exists('paidAmountRial', $body) && $body['paidAmountRial'] !== null ? filter_var($body['paidAmountRial'], FILTER_VALIDATE_INT) : null;
+        $rawPaidAmount = array_key_exists('paidAmountRial', $body) ? $body['paidAmountRial'] : null;
+        $paidAmount = $rawPaidAmount !== null ? filter_var($rawPaidAmount, FILTER_VALIDATE_INT) : null;
         $note = clean_text($body['note'] ?? '', 1000) ?? '';
         $allowedStatuses = ['submitted','triage','matching','offered','accepted','quoted','contract_pending','confirmed','in_service','completed','cancelled','rejected'];
         $allowedPayments = ['awaiting_contact','awaiting_payment','paid','failed','refunded','not_required'];
-        if (!$id || $id < 1 || ($status !== null && !in_array($status, $allowedStatuses, true)) || ($paymentStatus !== null && !in_array($paymentStatus, $allowedPayments, true)) || ($paidAmount !== null && $paidAmount < 0)) {
+        if (!$id || $id < 1 || ($status !== null && !in_array($status, $allowedStatuses, true)) || ($paymentStatus !== null && !in_array($paymentStatus, $allowedPayments, true)) || ($rawPaidAmount !== null && ($paidAmount === false || $paidAmount < 0))) {
             api_error('اطلاعات تغییر سفارش معتبر نیست.', 422);
         }
         $pdo->beginTransaction();

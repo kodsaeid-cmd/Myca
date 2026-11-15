@@ -52,7 +52,7 @@ function BottomNavigation({ active }: { active: string }) {
   const items = [
     { key: "home", label: "خانه", href: "/", Icon: House },
     { key: "requests", label: "سفارش‌ها", href: "/track", Icon: ClipboardList },
-    { key: "messages", label: "پیام‌ها", href: "/track", Icon: MessageCircle },
+    { key: "catalogs", label: "پکیج‌ها", href: "/catalogs", Icon: BookOpen },
     { key: "services", label: "خدمات من", href: "/services", Icon: HeartHandshake },
     { key: "profile", label: "پروفایل", href: "/account", Icon: UserRound }
   ];
