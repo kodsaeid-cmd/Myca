@@ -1,0 +1,56 @@
+/* Login and role selection */
+.login-page { display:flex; min-height:100vh; align-items:center; justify-content:center; padding:24px 16px; background:#f3fbff; }
+.login-card { width:100%; max-width:430px; padding:26px 22px; border:1px solid #e7eef3; border-radius:24px; background:white; box-shadow:0 12px 36px rgba(6,46,92,.08); }
+.login-logo { display:flex; align-items:center; justify-content:center; gap:8px; color:var(--myca-navy); font-size:18px; }
+.login-logo-mark { display:flex; width:38px; height:38px; align-items:center; justify-content:center; border-radius:13px; color:white; background:var(--myca-cyan-dark); font-size:22px; font-weight:900; }
+.login-card h1 { margin:20px 0 8px; color:var(--myca-navy); text-align:center; font-size:19px; font-weight:900; }
+.login-intro { margin:0 0 18px; color:#667085; text-align:center; font-size:11px; line-height:22px; }
+.terms-box { margin:14px 0; padding:12px; border:1px solid #e9eff4; border-radius:14px; background:#fbfdfe; }
+.check-row { display:flex; align-items:center; gap:9px; color:#344054; font-size:12px; cursor:pointer; }
+.check-row input { position:absolute; width:1px; height:1px; opacity:0; }
+.fake-check { display:inline-flex; width:19px; height:19px; flex:0 0 19px; align-items:center; justify-content:center; border:1px solid #cbd5df; border-radius:5px; color:white; background:white; }
+.check-row input:checked + .fake-check { border-color:var(--myca-cyan-dark); background:var(--myca-cyan-dark); }
+.terms-box p { margin:8px 0 0; color:#7b8794; font-size:10px; line-height:19px; }
+.terms-box p a, .login-help-links a { color:var(--myca-cyan-dark); text-decoration:underline; text-underline-offset:2px; }
+.login-mode-switch, .person-type-toggle { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; border-radius:13px; background:#f2f6f8; }
+.login-mode-switch button, .person-type-toggle button { min-height:40px; border:0; border-radius:10px; color:#667085; background:transparent; font-size:11px; font-weight:700; }
+.login-mode-switch button.selected, .person-type-toggle button.selected { color:var(--myca-cyan-dark); background:white; box-shadow:0 2px 8px rgba(6,46,92,.08); }
+.login-fields { margin-top:14px; }
+.login-fields .field-label { margin-top:10px; }
+.login-fields .primary-button { margin-top:14px; }
+.login-help-links { display:flex; justify-content:space-between; gap:12px; margin-top:12px; font-size:11px; }
+.form-message { margin:12px 0 0; padding:10px; border-radius:10px; color:var(--myca-cyan-dark); background:#eaf8fa; font-size:11px; text-align:center; }
+.form-message.error { color:var(--myca-error); background:#fff1f2; }
+.back-home { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:20px; color:#2563eb; font-size:12px; }
+.login-trust { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:18px; color:#98a2b3; font-size:10px; }
+.role-extra { display:flex; flex-direction:column; gap:10px; margin:14px 0; padding:12px; border-radius:14px; background:#f8fbfc; }
+.role-extra .field-label { margin:0; }
+
+/* Catalog list and page viewer */
+.catalog-back { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+.catalog-back a { display:inline-flex; align-items:center; gap:5px; color:#2563eb; font-size:13px; }
+.catalog-page-title { margin:8px 0; color:var(--myca-navy); font-size:20px; font-weight:900; }
+.catalog-page-intro { margin:0 0 18px; color:#667085; font-size:12px; line-height:22px; }
+.catalog-card-list { display:flex; flex-direction:column; gap:10px; }
+.catalog-card { display:flex; align-items:center; gap:12px; padding:14px; border:1px solid var(--myca-border); border-radius:18px; background:white; box-shadow:var(--shadow-card); }
+.catalog-icon { display:flex; width:44px; height:44px; flex:0 0 44px; align-items:center; justify-content:center; border-radius:14px; color:var(--myca-cyan-dark); background:#e7f6fb; }
+.catalog-copy { display:flex; min-width:0; flex:1; flex-direction:column; gap:4px; }
+.catalog-copy strong { color:var(--myca-navy); font-size:13px; font-weight:800; }
+.catalog-copy small { color:#667085; font-size:10px; line-height:18px; }
+.catalog-copy em { color:var(--myca-cyan-dark); font-size:10px; font-style:normal; font-weight:700; }
+.catalog-card > svg { color:#aab4c0; }
+.catalog-pages { display:flex; flex-direction:column; gap:14px; }
+.catalog-page-preview { margin:0; padding:10px; border:1px solid var(--myca-border); border-radius:16px; background:white; }
+.catalog-page-preview figcaption { margin:0 0 8px; color:var(--myca-navy); font-size:12px; font-weight:800; }
+.catalog-page-preview img { display:block; width:100%; height:auto; border-radius:8px; }
+.catalog-footer { margin:18px 0; color:#98a2b3; text-align:center; font-size:10px; }
+.pdf-placeholder, .not-found { display:flex; min-height:100vh; align-items:center; justify-content:center; padding:20px; background:#f3fbff; }
+.pdf-placeholder-card { display:flex; max-width:420px; flex-direction:column; align-items:center; gap:12px; padding:28px; border-radius:22px; background:white; text-align:center; }
+.pdf-placeholder-card > svg { color:var(--myca-cyan-dark); }
+.pdf-placeholder-card h1 { margin:0; font-size:18px; }
+.pdf-placeholder-card p { color:#667085; font-size:12px; line-height:22px; }
+.pdf-placeholder-card a, .not-found a { display:inline-flex; align-items:center; gap:6px; color:var(--myca-cyan-dark); font-size:12px; font-weight:800; }
+.not-found { flex-direction:column; gap:10px; text-align:center; }
+.not-found strong { color:var(--myca-cyan-dark); font-size:48px; }
+.not-found h1 { margin:0 0 10px; font-size:18px; }
+@media (max-width:480px) { .login-page { padding:14px; } .login-card { padding:22px 16px; } }
