@@ -1,5 +1,5 @@
 export type ServiceOption = { title: string; description?: string };
-export type ServiceItem = { slug: string; title: string; description: string; icon: string; options?: ServiceOption[] };
+export type ServiceItem = { slug: string; title: string; description: string; icon: string; href?: string; options?: ServiceOption[] };
 export type CategoryData = {
   id: string; title: string; hero: string; headline: string; subheadline: string;
   supportingText?: string; urgentLabel: string; services: ServiceItem[];
@@ -18,7 +18,7 @@ export const categories: Record<string, CategoryData> = {
     headline: "با آرامش،\nدر کنار عزیزان شما", subheadline: "مراقبت حرفه‌ای، امن و قابل اعتماد در منزل",
     urgentLabel: "پرستار سالمند",
     services: [
-      { slug: "independent", title: "سالمند مستقل", description: "همراهی برای سالمند مستقل در منزل", icon: "elderly-rocker.svg", options: elderShifts },
+      { slug: "independent", title: "سالمند مستقل", description: "همراهی برای سالمند مستقل در منزل", icon: "elderly-rocker.svg", href: "/category/22", options: elderShifts },
       { slug: "semi-dependent", title: "سالمند نیمه‌وابسته", description: "مراقبت متناسب با نیاز نیمه‌وابسته", icon: "home-care.svg", options: elderShifts },
       { slug: "dependent", title: "سالمند وابسته", description: "مراقبت تخصصی، بازتوانی و همراهی", icon: "elder-medical-care.svg", options: elderShifts }
     ]
@@ -28,7 +28,7 @@ export const categories: Record<string, CategoryData> = {
     hero: "https://mycaapp.com/customer-home/myca-hero-child-care-hijab.png",
     headline: "با آرامش خاطر", subheadline: "همراه شما در مراقبت از فرزند", urgentLabel: "پرستار کودک",
     services: [
-      { slug: "infant-nurse", title: "پرستار نوزاد", description: "مراقبت از نوزاد تا دو سالگی", icon: "mother-child.svg", options: [
+      { slug: "infant-nurse", title: "پرستار نوزاد", description: "مراقبت از نوزاد تا دو سالگی", icon: "mother-child.svg", href: "/category/27", options: [
         { title: "روزانه", description: "این خدمت برای پرستاری از نوزادان تا ۲ سالگی در نظر گرفته شده است." },
         { title: "شبانه", description: "حضور و مراقبت در شب" }, { title: "شبانه‌روزی", description: "مراقبت ۲۴ ساعته در منزل" }
       ] },
