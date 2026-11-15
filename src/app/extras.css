@@ -126,3 +126,18 @@
   .pricing-custom-card { grid-column:auto; }
   .pricing-hero-content h1 { font-size:20px; }
 }
+
+.login-resend-button, .login-help-links button {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-top:10px;
+  padding:8px 4px;
+  border:0;
+  color:var(--myca-cyan-dark);
+  background:transparent;
+  font:inherit;
+  font-size:11px;
+  cursor:pointer;
+}
+.login-fields button:disabled { opacity:.65; cursor:wait; }
