@@ -81,7 +81,7 @@ export const pricingCatalogs: Record<string, PricingCatalog> = {
       { id: "infant", title: "مراقبت از نوزاد", ageRange: "تا ۱۲ ماه", monthlySalaryMillion: 39, tag: "نوزاد", description: "مناسب نوزاد و مادر در ماه‌های اول؛ مراقبت روزمره، تغذیه، بهداشت، خواب و رسیدگی به امور مرتبط با نوزاد." },
       { id: "toddler", title: "مراقبت از کودک", ageRange: "۲ تا ۴ سال", monthlySalaryMillion: 40, tag: "نوپا", description: "مناسب کودک نوپا با نیاز به مراقبت روزانه، تغذیه سالم، بازی، سرگرمی و رسیدگی به روتین‌های روزمره." },
       { id: "preschool", title: "مراقبت از کودک", ageRange: "۴ تا ۶ سال", monthlySalaryMillion: 44, tag: "پیش‌دبستانی", description: "مناسب کودک پیش‌دبستانی؛ علاوه بر مراقبت روزانه، بازی هدفمند، تقویت مهارت‌های اولیه و نظم روزمره." },
-      { id: "school-age", title: "مراقبت کودک", ageRange: "۴ تا ۱۲ سال", monthlySalaryMillion: 50, tag: "پکیج تخصصی", description: "مناسب کودک در سنین بالاتر؛ مراقبت روزانه و همراهی در برنامه‌های آموزشی و فعالیت‌های متناسب با سن." },
+      { id: "school-age", title: "مراقبت کودک همراه آموزش", ageRange: "۶ تا ۱۲ سال", monthlySalaryMillion: 50, tag: "پکیج تخصصی", description: "مناسب کودک دبستانی؛ مراقبت روزانه، همراهی در تکالیف و برنامه‌های منظم، تغذیه سالم و نظارت." },
       { id: "pregnancy", title: "همراهی دوران بارداری", monthlySalaryMillion: 37, tag: "مادر و کودک", description: "همراهی و کمک غیرپزشکی به مادر در امور روزمره، آماده‌سازی غذای مناسب و همراهی در مراجعات موردنیاز." },
       { id: "custom", title: "خدمت اختصاصی", custom: true, tag: "طراحی متناسب با خانواده", description: "برای شرایط خاص، سنین یا نیازهایی که در پکیج‌های استاندارد پوشش داده نشده‌اند، درخواست طراحی خدمت اختصاصی ثبت کنید." }
     ],
