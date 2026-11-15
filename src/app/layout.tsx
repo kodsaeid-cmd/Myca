@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./extras.css";
+import { SiteAnalytics } from "@/components/site-analytics";
 
 export const metadata: Metadata = {
   title: "مایکا",
@@ -14,5 +15,5 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="fa" dir="rtl"><body>{children}</body></html>;
+  return <html lang="fa" dir="rtl"><body>{children}<SiteAnalytics /></body></html>;
 }

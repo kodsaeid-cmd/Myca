@@ -51,10 +51,10 @@ export function AppShell({ children, activeNav = "home" }: { children: ReactNode
 function BottomNavigation({ active }: { active: string }) {
   const items = [
     { key: "home", label: "خانه", href: "/", Icon: House },
-    { key: "requests", label: "درخواست‌ها", href: "/requests", Icon: ClipboardList },
+    { key: "requests", label: "سفارش‌ها", href: "/requests", Icon: ClipboardList },
     { key: "messages", label: "پیام‌ها", href: "/login/receiver?next=/receiver/notifications", Icon: MessageCircle },
     { key: "services", label: "خدمات من", href: "/services", Icon: HeartHandshake },
-    { key: "profile", label: "پروفایل", href: "/login/receiver?next=/receiver/profile", Icon: UserRound }
+    { key: "profile", label: "پروفایل", href: "/account", Icon: UserRound }
   ];
   return <nav className="bottom-navigation" aria-label="ناوبری اصلی"><ul>{items.map(({ key, label, href, Icon }) => (
     <li key={key}><Link href={href} className={active === key ? "bottom-nav-link active" : "bottom-nav-link"}><Icon size={21} strokeWidth={1.75} /><span>{label}</span></Link></li>

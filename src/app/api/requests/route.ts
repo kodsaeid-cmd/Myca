@@ -83,6 +83,8 @@ function buildPricingSnapshot(args: {
     return {
       estimate_status: "quote_required",
       reason: "package_or_catalog_not_selected",
+      payment_method: "phone_coordination",
+      payment_status: "awaiting_contact",
       friday_required: fridayRequired
     };
   }
@@ -96,6 +98,8 @@ function buildPricingSnapshot(args: {
       catalog: catalog.slug,
       package_id: selectedPackage.id,
       package_title: selectedPackage.title,
+      payment_method: "phone_coordination",
+      payment_status: "awaiting_contact",
       friday_required: fridayRequired
     };
   }
@@ -112,6 +116,8 @@ function buildPricingSnapshot(args: {
 
   return {
     estimate_status: fridayRequired ? "provisional_excluding_friday" : "provisional",
+    payment_method: "phone_coordination",
+    payment_status: "awaiting_contact",
     source_catalog: catalog.slug,
     package_id: selectedPackage.id,
     package_title: selectedPackage.title,
@@ -143,7 +149,7 @@ export async function GET(request: NextRequest) {
     }
 
     const query = new URLSearchParams({
-      select: "id,reference,category_id,service_slug,delivery_class,requested_shift,requested_start_at,duration_months,friday_required,is_urgent,city,province,status,pricing_snapshot,created_at,updated_at",
+      select: "id,reference,requester_name,requester_phone,recipient_name,category_id,service_slug,delivery_class,requested_shift,requested_start_at,duration_months,friday_required,is_urgent,city,province,status,payment_method,payment_status,paid_amount_rial,paid_at,pricing_snapshot,created_at,updated_at",
       requester_id: `eq.${auth.user.id}`,
       order: "created_at.desc",
       limit: "50"
@@ -244,6 +250,9 @@ export async function POST(request: NextRequest) {
     }
 
     const catalog = getPricingCatalog(categoryId, serviceSlug);
+    if (catalog && !packageId) {
+      return NextResponse.json({ error: "برای ثبت سفارش، ابتدا یکی از پکیج‌های این کاتالوگ را انتخاب کنید." }, { status: 422 });
+    }
     if (packageId && !catalog) {
       return NextResponse.json({ error: "پکیج انتخاب‌شده با این خدمت سازگار نیست." }, { status: 422 });
     }

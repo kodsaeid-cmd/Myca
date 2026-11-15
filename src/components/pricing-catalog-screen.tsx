@@ -165,7 +165,7 @@ export function PricingCatalogScreen({ catalog }: { catalog: PricingCatalog }) {
             <p className="pricing-calculator-note">
               این برآورد بر پایه حقوق ماهانه پایه پکیج محاسبه شده است. هزینه شیفت شبانه‌روزی، حضور در روز جمعه و در کاتالوگ کودک، کودک اضافه، جداگانه به مبلغ قرارداد افزوده می‌شوند و در عدد بالا لحاظ نشده‌اند.
             </p>
-            <Link href={requestHref} className="pricing-primary-cta"><PhoneCall size={18} />ثبت درخواست این خدمت</Link>
+            <Link href={requestHref} className="pricing-primary-cta" data-analytics="cta"><PhoneCall size={18} />ثبت سفارش این پکیج</Link>
             <a href="tel:41124" className="pricing-calculator-note">سؤال دارید؟ تماس با مایکا · ۴۱۱۲۴</a>
           </section>
         ) : (

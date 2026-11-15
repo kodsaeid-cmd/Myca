@@ -11,19 +11,7 @@ import { categories, type CategoryData } from "@/lib/myca-data";
 import { commissionRates, pricingCatalogs, type PricingCatalog } from "@/lib/pricing-data";
 import styles from "./request-flow.module.css";
 
-const DRAFTS_KEY = "myca_request_drafts_v1";
 const mainCategoryIds = ["11", "12", "13", "14", "17", "32"];
-
-export type RequestDraft = {
-  id: string; createdAt: string; categoryId: string; categoryTitle: string;
-  serviceSlug: string; serviceTitle: string; packageTitle?: string; packageId?: string;
-  shift: string; startDate: string; startTime: string; months: number; fridayRequired: boolean;
-  recipientName: string; recipientAge: string; dependency: string;
-  childCount: number; notes: string; requesterName: string; phone: string;
-  city: string; address: string; urgent: boolean;
-  estimatedTotalMillion?: number; status: "draft" | "submitted";
-  submittedReference?: string; submittedStatus?: string;
-};
 
 type InitialRequest = { category?: string; service?: string; package?: string; shift?: string; urgent?: string };
 
@@ -84,8 +72,10 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
   const [packageId, setPackageId] = useState(initial.package ?? "");
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
-  const [savedDraftId, setSavedDraftId] = useState("");
-  const [acceptedLocalStorage, setAcceptedLocalStorage] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submittedOrder, setSubmittedOrder] = useState<{ id: string; reference: string; status: string; createdAt: string } | null>(null);
   const [recipientName, setRecipientName] = useState("");
   const [recipientAge, setRecipientAge] = useState("");
   const [dependency, setDependency] = useState("");
@@ -133,6 +123,41 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
     if (!shifts.includes(shift)) setShift(shifts[0] ?? "نیاز به هماهنگی");
   }, [shifts, shift]);
 
+  useEffect(() => {
+    let active = true;
+    async function checkCustomerSession() {
+      try {
+        const response = await fetch("/api/auth/session", { cache: "no-store" });
+        const result = await response.json().catch(() => ({}));
+        if (!active) return;
+        if (!response.ok) {
+          setAuthError(result.error || "بررسی حساب مشتری ممکن نشد.");
+          setAuthReady(true);
+          return;
+        }
+        if (!result.authenticated) {
+          const next = window.location.pathname + window.location.search;
+          window.location.assign("/login/receiver?next=" + encodeURIComponent(next));
+          return;
+        }
+        if (!Array.isArray(result.roles) || !result.roles.includes("family")) {
+          setAuthError("برای ثبت سفارش باید با حساب خدمت‌گیرنده وارد شوید.");
+          setAuthReady(true);
+          return;
+        }
+        if (typeof result.user?.phone === "string") setPhone(result.user.phone);
+        setAuthReady(true);
+      } catch {
+        if (active) {
+          setAuthError("ارتباط با سامانه ورود برقرار نشد. دوباره صفحه را بارگذاری کنید.");
+          setAuthReady(true);
+        }
+      }
+    }
+    void checkCustomerSession();
+    return () => { active = false; };
+  }, []);
+
   function chooseCategory(nextId: string) {
     const nextCategory = categories[nextId];
     if (!nextCategory) return;
@@ -159,7 +184,7 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
       if (phone.trim().replace(/\s/g, "").length < 10) return "شماره تماس معتبر وارد کنید.";
       if (!city.trim() || !address.trim()) return "شهر و نشانی محل ارائه خدمت را تکمیل کنید.";
     }
-    if (step === 4 && !acceptedLocalStorage) return "برای ذخیره پیش‌نویس محلی، تأیید خود را ثبت کنید.";
+    if (step === 4 && catalog && !packageId) return "برای ثبت سفارش، یکی از پکیج‌های موجود را انتخاب کنید.";
     return "";
   }
 
@@ -175,40 +200,80 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
     setStep((current) => Math.max(0, current - 1));
   }
 
-  function saveDraft() {
+  async function submitOrder() {
     const validation = validateCurrentStep();
     if (validation) { setError(validation); return; }
-    const id = "MYCA-D-" + Date.now().toString().slice(-7);
-    const draft: RequestDraft = {
-      id, createdAt: new Date().toISOString(), categoryId, categoryTitle: category.title,
-      serviceSlug, serviceTitle: service.title, packageTitle: selectedPackage?.title, packageId: selectedPackage?.id,
-      shift, startDate, startTime, months: catalog ? months : 0, fridayRequired: friday, recipientName, recipientAge, dependency,
-      childCount: Number(childCount) || 1, notes, requesterName, phone, city, address,
-      urgent, estimatedTotalMillion: estimatedTotal, status: "draft"
-    };
+    setSubmitting(true);
+    setError("");
     try {
-      const stored = JSON.parse(sessionStorage.getItem(DRAFTS_KEY) ?? "[]");
-      const current = Array.isArray(stored) ? stored as RequestDraft[] : [];
-      sessionStorage.setItem(DRAFTS_KEY, JSON.stringify([draft, ...current].slice(0, 20)));
-      setSavedDraftId(id);
-      setError("");
+      const startAt = new Date(`${startDate}T${startTime}:00`).toISOString();
+      const response = await fetch("/api/requests", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          categoryId,
+          serviceSlug,
+          packageId: packageId || null,
+          shift,
+          startAt,
+          durationMonths: catalog ? months : null,
+          fridayRequired: friday,
+          childrenCount: Number(childCount) || 1,
+          recipientName,
+          recipientAge: recipientAge || null,
+          dependency: dependency || null,
+          notes,
+          requesterName,
+          phone,
+          city,
+          address,
+          urgent
+        })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        const next = window.location.pathname + window.location.search;
+        window.location.assign("/login/receiver?next=" + encodeURIComponent(next));
+        return;
+      }
+      if (!response.ok || !result.request?.reference) {
+        setError(result.error || "ثبت سفارش انجام نشد. لطفاً دوباره تلاش کنید.");
+        return;
+      }
+      setSubmittedOrder({
+        id: result.request.id,
+        reference: result.request.reference,
+        status: result.request.status,
+        createdAt: result.request.createdAt
+      });
     } catch {
-      setError("ذخیره پیش‌نویس در این مرورگر ممکن نشد. لطفاً فضای ذخیره‌سازی مرورگر را بررسی کنید.");
+      setError("ارتباط با سامانه برقرار نشد. اطلاعات واردشده را بررسی و دوباره تلاش کنید.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
-  if (savedDraftId) {
+  if (!authReady) {
+    return <AppShell activeNav="requests"><div className={styles.container} dir="rtl"><div className={styles.emptyState}>در حال بررسی حساب مشتری…</div></div></AppShell>;
+  }
+
+  if (authError) {
+    return <AppShell activeNav="requests"><div className={styles.container} dir="rtl"><div className={styles.emptyState}><h2>ورود به سفارش‌گذاری ممکن نیست.</h2><p>{authError}</p><Link href="/login/receiver" className={styles.primaryButton}>ورود به حساب مشتری</Link></div></div></AppShell>;
+  }
+
+  if (submittedOrder) {
     return (
       <AppShell activeNav="requests">
         <div className={styles.container} dir="rtl">
           <div className={styles.successPanel}>
             <span className={styles.successIcon}><Check size={30} /></span>
-            <span className={styles.eyebrow}>پیش‌نویس آماده شد</span>
-            <h1>اطلاعات درخواست شما در این نشست ذخیره شد.</h1>
-            <p>این پیش‌نویس هنوز به سامانه مایکا ارسال نشده و به معنی تأیید مراقب، رزرو یا پرداخت نیست.</p>
-            <div className={styles.reference}><span>کد پیش‌نویس محلی</span><strong>{savedDraftId}</strong></div>
+            <span className={styles.eyebrow}>سفارش شما ثبت شد</span>
+            <h1>درخواست خرید پکیج به مایکا رسید.</h1>
+            <p>کارشناسان مایکا برای تأیید جزئیات، اعلام مبلغ نهایی و هماهنگی پرداخت با شما تماس می‌گیرند. هنگام ثبت سفارش هیچ پرداختی انجام نشده است.</p>
+            <div className={styles.reference}><span>کد پیگیری سفارش</span><strong>{submittedOrder.reference}</strong></div>
             <div className={styles.buttonColumn}>
-              <Link href="/requests" className={styles.primaryButton}>مشاهده پیش‌نویس‌ها</Link>
+              <Link href={"/track?reference=" + encodeURIComponent(submittedOrder.reference)} className={styles.primaryButton}>پیگیری وضعیت سفارش</Link>
+              <Link href="/requests" className={styles.secondaryButton}>مشاهده سفارش‌های من</Link>
               <a href="tel:41124" className={styles.secondaryButton}><PhoneCall size={17} />تماس با مایکا · ۴۱۱۲۴</a>
               <Link href="/" className={styles.textLink}>بازگشت به صفحه اصلی</Link>
             </div>
@@ -218,16 +283,16 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
     );
   }
 
-  const steps = ["انتخاب خدمت", "نیازسنجی", "زمان‌بندی", "اطلاعات تماس", "بازبینی"];
+  const steps = ["انتخاب خدمت", "نیازسنجی", "زمان‌بندی", "اطلاعات تماس", "تأیید سفارش"];
 
   return (
     <AppShell activeNav="requests">
       <div className={styles.container} dir="rtl">
         <Link href="/" className={styles.backLink}><ArrowRight size={16} />بازگشت به خانه</Link>
         <header className={styles.header}>
-          <span className={styles.eyebrow}>شروع دریافت خدمت از مایکا</span>
-          <h1>درخواست مراقبت متناسب با نیاز خانواده</h1>
-          <p>چند مرحله کوتاه را تکمیل کنید تا درخواست شما برای بررسی و معرفی خدمت مناسب آماده شود.</p>
+          <span className={styles.eyebrow}>سفارش پکیج و خدمات مایکا</span>
+          <h1>ثبت سفارش خدمت موردنظر</h1>
+          <p>پکیج را انتخاب کنید، اطلاعات سفارش را ثبت کنید و منتظر تماس کارشناس مایکا بمانید.</p>
         </header>
 
         <div className={styles.stepper} aria-label="مراحل درخواست">
@@ -269,7 +334,7 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
             </div>
             {catalog && (
               <div className={styles.packageSection}>
-                <div className={styles.sectionSubheading}><h3>پکیج موردنظر</h3><span>اختیاری · قابل تعیین پس از مشاوره</span></div>
+                <div className={styles.sectionSubheading}><h3>پکیج موردنظر</h3><span>الزامی برای ثبت سفارش</span></div>
                 <div className={styles.packageGrid}>
                   <button type="button" onClick={() => setPackageId("")} className={!packageId ? styles.packageSelected : styles.packageCard}>
                     <strong>هنوز انتخاب نکرده‌ام</strong><small>مایکا در انتخاب پکیج مناسب راهنمایی می‌کند.</small>
@@ -358,11 +423,11 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
         {step === 4 && (
           <section className={styles.section}>
             <div className={styles.sectionHeading}>
-              <span>مرحله پنجم</span><h2>بازبینی درخواست و برآورد هزینه</h2>
-              <p>پیش از ذخیره پیش‌نویس، اطلاعات و محدودیت‌های این نسخه را بررسی کنید.</p>
+              <span>مرحله پنجم</span><h2>بازبینی سفارش و برآورد هزینه</h2>
+              <p>اطلاعات پکیج و درخواست را بررسی کنید. ثبت سفارش در این مرحله بدون پرداخت آنلاین انجام می‌شود.</p>
             </div>
             <div className={styles.summaryCard}>
-              <div className={styles.summaryHeader}><ClipboardList size={20} /><strong>خلاصه درخواست</strong></div>
+              <div className={styles.summaryHeader}><ClipboardList size={20} /><strong>خلاصه سفارش</strong></div>
               <div className={styles.summaryLine}><span>حوزه خدمت</span><strong>{category.title}</strong></div>
               <div className={styles.summaryLine}><span>نوع خدمت</span><strong>{service.title}</strong></div>
               {selectedPackage && <div className={styles.summaryLine}><span>پکیج</span><strong>{selectedPackage.title}</strong></div>}
@@ -382,7 +447,7 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
 
             {typeof estimatedTotal === "number" ? (
               <div className={styles.pricePanel}>
-                <div className={styles.summaryHeader}><Wallet size={20} /><strong>پیش‌فاکتور تخمینی</strong></div>
+                <div className={styles.summaryHeader}><Wallet size={20} /><strong>برآورد اولیه هزینه</strong></div>
                 <div className={styles.summaryLine}><span>حقوق ماهانه پایه</span><strong>{formatMillions(baseMonthlySalary!)} میلیون تومان</strong></div>
                 {surchargePercent > 0 && <div className={styles.summaryLine}><span>افزایش شیفت/کودک اضافه ({formatMillions(surchargePercent)}٪)</span><strong>{formatMillions(adjustedMonthlySalary! - baseMonthlySalary!)} میلیون تومان در ماه</strong></div>}
                 <div className={styles.summaryLine}><span>حقوق ماهانه پس از افزایش‌های انتخابی</span><strong>{formatMillions(adjustedMonthlySalary!)} میلیون تومان</strong></div>
@@ -403,14 +468,10 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
               <p>پس از بررسی درخواست، مراقبان واجد شرایط و متناسب با نیاز خانواده معرفی می‌شوند. فهرست زنده مراقبان، احراز هویت و ظرفیت زمانی هنوز به این نسخه متصل نیست؛ بنابراین در این مرحله مراقب واقعی نمایش داده نمی‌شود.</p>
             </div>
             <div className={styles.paymentPanel}>
-              <div className={styles.summaryHeader}><ShieldCheck size={20} /><strong>پرداخت و تأیید قرارداد</strong></div>
-              <p>پرداخت آنلاین و امضای قرارداد در این نسخه فعال نیستند. ابتدا باید درخواست بررسی و پیش‌فاکتور رسمی تأیید شود.</p>
-              <button type="button" className={styles.disabledPayment} disabled>پرداخت آنلاین پس از اتصال درگاه فعال می‌شود</button>
+              <div className={styles.summaryHeader}><ShieldCheck size={20} /><strong>نحوه پرداخت در فاز اول</strong></div>
+              <p>پس از ثبت سفارش، کارشناس مایکا با شما تماس می‌گیرد تا مبلغ نهایی، روش پرداخت و زمان شروع خدمت را هماهنگ کند. پرداخت آنلاین در این فاز وجود ندارد.</p>
+              <p className={styles.hint}>ثبت سفارش به معنی پرداخت وجه، تأیید ظرفیت یا شروع قرارداد نیست. وضعیت پرداخت پس از هماهنگی و تأیید کارشناس در پروفایل شما به‌روزرسانی می‌شود.</p>
             </div>
-            <label className={styles.consent}>
-              <input type="checkbox" checked={acceptedLocalStorage} onChange={(event) => setAcceptedLocalStorage(event.target.checked)} />
-              <span>می‌دانم این نسخه به سرور مایکا متصل نیست و با ذخیره پیش‌نویس، اطلاعات فرم فقط در همین نشست مرورگر نگهداری می‌شود.</span>
-            </label>
           </section>
         )}
 
@@ -419,141 +480,82 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
           {step > 0 ? <button type="button" onClick={previousStep} className={styles.secondaryButton}>مرحله قبل</button> : <span />}
           {step < 4
             ? <button type="button" onClick={nextStep} className={styles.primaryButton}>ادامه <ChevronLeft size={17} /></button>
-            : <button type="button" onClick={saveDraft} className={styles.primaryButton}>ذخیره پیش‌نویس روی این دستگاه <Check size={17} /></button>}
+            : <button type="button" onClick={() => void submitOrder()} disabled={submitting} className={styles.primaryButton}>{submitting ? "در حال ثبت سفارش…" : "ثبت سفارش و درخواست تماس مایکا"} <Check size={17} /></button>}
         </div>
-        <p className={styles.disclaimer}>ذخیره پیش‌نویس به معنی ارسال درخواست، تأیید ظرفیت، انتخاب مراقب یا ایجاد قرارداد نیست. برای ارسال و هماهنگی واقعی با ۴۱۱۲۴ تماس بگیرید.</p>
+        <p className={styles.disclaimer}>پس از ثبت سفارش، کد پیگیری برای شما صادر می‌شود. پرداخت با هماهنگی تلفنی انجام خواهد شد؛ برای تماس مستقیم با مایکا با ۴۱۱۲۴ تماس بگیرید.</p>
       </div>
     </AppShell>
   );
 }
 
 export function RequestDashboardScreen({ mode }: { mode: "requests" | "services" }) {
-  const [drafts, setDrafts] = useState<RequestDraft[]>([]);
-  const [serverRequests, setServerRequests] = useState<Array<Record<string, unknown>>>([]);
+  const [orders, setOrders] = useState<Array<Record<string, unknown>>>([]);
   const [loaded, setLoaded] = useState(false);
-  const [sendingId, setSendingId] = useState("");
-  const [sendMessages, setSendMessages] = useState<Record<string, { text: string; kind: "success" | "error" }>>({});
+  const [error, setError] = useState("");
+  const isRequests = mode === "requests";
 
   useEffect(() => {
-    async function loadDashboard() {
+    let active = true;
+    async function loadOrders() {
+      if (!isRequests) { setLoaded(true); return; }
       try {
-        const stored = JSON.parse(sessionStorage.getItem(DRAFTS_KEY) ?? "[]");
-        setDrafts(Array.isArray(stored) ? stored as RequestDraft[] : []);
-      } catch {
-        setDrafts([]);
-      }
-
-      if (mode === "requests") {
-        try {
-          const response = await fetch("/api/requests", { cache: "no-store" });
-          if (response.ok) {
-            const result = await response.json();
-            setServerRequests(Array.isArray(result.requests) ? result.requests : []);
-          }
-        } catch {
-          setServerRequests([]);
+        const response = await fetch("/api/requests", { cache: "no-store" });
+        const result = await response.json().catch(() => ({}));
+        if (!active) return;
+        if (response.status === 401) {
+          window.location.assign("/login/receiver?next=%2Frequests");
+          return;
         }
+        if (!response.ok) {
+          setError(result.error || "دریافت سفارش‌ها ممکن نشد.");
+          setOrders([]);
+        } else {
+          setOrders(Array.isArray(result.requests) ? result.requests : []);
+        }
+      } catch {
+        if (active) setError("ارتباط با سامانه برقرار نشد.");
+      } finally {
+        if (active) setLoaded(true);
       }
-      setLoaded(true);
     }
-    void loadDashboard();
-  }, [mode]);
+    void loadOrders();
+    return () => { active = false; };
+  }, [isRequests]);
 
-  async function submitDraft(draft: RequestDraft) {
-    if (draft.status === "submitted" || sendingId) return;
-    setSendingId(draft.id);
-    setSendMessages((current) => ({ ...current, [draft.id]: { text: "", kind: "error" } }));
-    try {
-      const startAt = new Date(`${draft.startDate}T${draft.startTime}:00`).toISOString();
-      const response = await fetch("/api/requests", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          categoryId: draft.categoryId,
-          serviceSlug: draft.serviceSlug,
-          packageId: draft.packageId ?? null,
-          shift: draft.shift,
-          startAt,
-          durationMonths: draft.months > 0 ? draft.months : null,
-          fridayRequired: draft.fridayRequired,
-          childrenCount: draft.childCount,
-          recipientName: draft.recipientName,
-          recipientAge: draft.recipientAge || null,
-          dependency: draft.dependency || null,
-          notes: draft.notes,
-          requesterName: draft.requesterName,
-          phone: draft.phone,
-          city: draft.city,
-          address: draft.address,
-          urgent: draft.urgent
-        })
-      });
-      const result = await response.json().catch(() => ({}));
-      if (response.status === 401) {
-        window.location.assign("/login/receiver?next=%2Frequests");
-        return;
-      }
-      if (!response.ok || !result.request?.reference) {
-        setSendMessages((current) => ({
-          ...current,
-          [draft.id]: { text: result.error || "ثبت درخواست انجام نشد. اطلاعات اتصال سامانه را بررسی کنید.", kind: "error" }
-        }));
-        return;
-      }
-
-      const updatedDrafts = drafts.map((item) => item.id === draft.id
-        ? { ...item, status: "submitted" as const, submittedReference: result.request.reference, submittedStatus: result.request.status }
-        : item
-      );
-      setDrafts(updatedDrafts);
-      sessionStorage.setItem(DRAFTS_KEY, JSON.stringify(updatedDrafts));
-      setServerRequests((current) => [{
-        id: result.request.id,
-        reference: result.request.reference,
-        category_id: draft.categoryId,
-        service_slug: draft.serviceSlug,
-        requested_shift: draft.shift,
-        requested_start_at: startAt,
-        status: result.request.status,
-        city: draft.city,
-        created_at: result.request.createdAt
-      }, ...current]);
-      setSendMessages((current) => ({
-        ...current,
-        [draft.id]: { text: "درخواست شما با کد " + result.request.reference + " در سامانه مایکا ثبت شد.", kind: "success" }
-      }));
-    } catch {
-      setSendMessages((current) => ({
-        ...current,
-        [draft.id]: { text: "ارتباط با سامانه برقرار نشد. پیش‌نویس شما همچنان روی همین دستگاه محفوظ است.", kind: "error" }
-      }));
-    } finally {
-      setSendingId("");
-    }
-  }
-
-  const isRequests = mode === "requests";
   function serviceTitleFor(categoryId: unknown, slug: unknown) {
     const category = typeof categoryId === "string" ? categories[categoryId] : undefined;
     const service = category?.services.find((item) => item.slug === slug);
     return service?.title ?? (typeof slug === "string" ? slug : "خدمت مایکا");
   }
+
   function statusTitle(status: unknown) {
     const labels: Record<string, string> = {
-      submitted: "ثبت‌شده برای بررسی",
-      triage: "در انتظار بررسی تخصصی",
-      matching: "در حال یافتن مراقب مناسب",
-      offered: "معرفی مراقب",
-      accepted: "مراقب پذیرفته‌شده",
-      quoted: "پیش‌فاکتور صادرشده",
-      contract_pending: "در انتظار تأیید قرارداد",
-      confirmed: "آماده شروع خدمت",
+      submitted: "در انتظار تماس مایکا",
+      triage: "در انتظار بررسی کارشناسی",
+      matching: "در حال بررسی و هماهنگی",
+      offered: "پیشنهاد خدمت آماده است",
+      accepted: "تأیید اولیه انجام شد",
+      quoted: "پیش‌فاکتور صادر شده",
+      contract_pending: "در انتظار نهایی‌سازی قرارداد",
+      confirmed: "خدمت تأیید شده",
       in_service: "در حال ارائه خدمت",
       completed: "تکمیل‌شده",
       cancelled: "لغوشده",
-      rejected: "ردشده"
+      rejected: "بسته‌شده"
     };
     return typeof status === "string" ? labels[status] ?? status : "در حال بررسی";
+  }
+
+  function paymentTitle(status: unknown) {
+    const labels: Record<string, string> = {
+      awaiting_contact: "در انتظار تماس مایکا",
+      awaiting_payment: "در انتظار پرداخت با هماهنگی",
+      paid: "پرداخت تأیید شده",
+      failed: "پرداخت ناموفق",
+      refunded: "مسترد شده",
+      not_required: "بدون نیاز به پرداخت"
+    };
+    return typeof status === "string" ? labels[status] ?? status : "در انتظار هماهنگی";
   }
 
   return (
@@ -561,87 +563,52 @@ export function RequestDashboardScreen({ mode }: { mode: "requests" | "services"
       <div className={styles.container} dir="rtl">
         <Link href="/" className={styles.backLink}><ArrowRight size={16} />بازگشت به خانه</Link>
         <header className={styles.header}>
-          <span className={styles.eyebrow}>{isRequests ? "درخواست‌های خانواده" : "مدیریت خدمت"}</span>
-          <h1>{isRequests ? "درخواست‌های من" : "خدمات من"}</h1>
-          <p>{isRequests ? "درخواست‌های ثبت‌شده در مایکا و پیش‌نویس‌های ذخیره‌شده در این نشست." : "خدمت فعال پس از تأیید قرارداد و شروع خدمت در این بخش نمایش داده می‌شود."}</p>
+          <span className={styles.eyebrow}>{isRequests ? "سفارش‌های خانواده" : "مدیریت خدمت"}</span>
+          <h1>{isRequests ? "سفارش‌های من" : "خدمات من"}</h1>
+          <p>{isRequests ? "سفارش‌های ثبت‌شده، کد پیگیری و وضعیت هماهنگی و پرداخت را اینجا مشاهده می‌کنید." : "خدمت فعال پس از تأیید سفارش و شروع ارائه خدمت در این بخش نمایش داده می‌شود."}</p>
         </header>
 
         {!loaded ? <div className={styles.emptyState}>در حال خواندن اطلاعات…</div>
+          : error ? <div className={styles.emptyState}><p>{error}</p></div>
           : isRequests ? (
-            <>
-              {serverRequests.length > 0 && (
-                <section className={styles.section}>
-                  <div className={styles.sectionSubheading}><h3>درخواست‌های ثبت‌شده در مایکا</h3><span>{formatMillions(serverRequests.length)} درخواست</span></div>
-                  <div className={styles.draftList}>
-                    {serverRequests.map((item, index) => (
-                      <article className={styles.draftCard} key={String(item.id ?? item.reference ?? index)}>
-                        <div className={styles.draftTopline}>
-                          <strong>{serviceTitleFor(item.category_id, item.service_slug)}</strong>
-                          <span className={styles.submittedStatus}>{statusTitle(item.status)}</span>
-                        </div>
-                        <div className={styles.summaryLine}><span>کد درخواست</span><strong>{String(item.reference ?? "—")}</strong></div>
-                        <div className={styles.summaryLine}><span>شهر</span><strong>{String(item.city ?? "—")}</strong></div>
-                        <div className={styles.summaryLine}><span>شیفت</span><strong>{String(item.requested_shift ?? "—")}</strong></div>
-                        <div className={styles.summaryLine}><span>زمان شروع</span><strong>{typeof item.requested_start_at === "string" ? new Date(item.requested_start_at).toLocaleString("fa-IR") : "—"}</strong></div>
-                      </article>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {drafts.filter((draft) => draft.status === "draft").length > 0 && (
-                <section className={styles.section}>
-                  <div className={styles.sectionSubheading}><h3>پیش‌نویس‌های این دستگاه</h3><span>{formatMillions(drafts.filter((draft) => draft.status === "draft").length)} پیش‌نویس</span></div>
-                  <div className={styles.draftList}>
-                    {drafts.filter((draft) => draft.status === "draft").map((draft) => (
-                      <article className={styles.draftCard} key={draft.id}>
-                        <div className={styles.draftTopline}><strong>{draft.serviceTitle}</strong><span className={styles.localStatus}>پیش‌نویس محلی</span></div>
-                        <p>{draft.categoryTitle}{draft.packageTitle ? " · " + draft.packageTitle : ""}</p>
-                        <div className={styles.summaryLine}><span>شروع درخواستی</span><strong>{draft.startDate} · {draft.startTime}</strong></div>
-                        {draft.months > 0 && <div className={styles.summaryLine}><span>مدت</span><strong>{formatMillions(draft.months)} ماه</strong></div>}
-                        {draft.urgent && <div className={styles.summaryLine}><span>اولویت</span><strong>فوری · نیازمند تأیید</strong></div>}
-                        {typeof draft.estimatedTotalMillion === "number" && <div className={styles.summaryLine}><span>برآورد اولیه</span><strong>{formatMillions(draft.estimatedTotalMillion)} میلیون تومان</strong></div>}
-                        <div className={styles.summaryLine}><span>کد پیش‌نویس</span><strong>{draft.id}</strong></div>
-                        {sendMessages[draft.id]?.text && <p className={sendMessages[draft.id].kind === "success" ? styles.successMessage : styles.errorMessage}>{sendMessages[draft.id].text}</p>}
-                        <button type="button" className={styles.primaryButton} onClick={() => void submitDraft(draft)} disabled={Boolean(sendingId)}>
-                          {sendingId === draft.id ? "در حال ارسال…" : "ارسال درخواست به سامانه مایکا"}
-                        </button>
-                        <a href="tel:41124" className={styles.secondaryButton}><PhoneCall size={16} />نیاز به راهنمایی؟ تماس با مایکا</a>
-                      </article>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {drafts.filter((draft) => draft.status === "submitted").length > 0 && (
-                <section className={styles.section}>
-                  <div className={styles.sectionSubheading}><h3>پیش‌نویس‌های ارسال‌شده</h3><span>{formatMillions(drafts.filter((draft) => draft.status === "submitted").length)} مورد</span></div>
-                  <div className={styles.draftList}>
-                    {drafts.filter((draft) => draft.status === "submitted").map((draft) => (
-                      <article className={styles.draftCard} key={draft.id}>
-                        <div className={styles.draftTopline}><strong>{draft.serviceTitle}</strong><span className={styles.submittedStatus}>{statusTitle(draft.submittedStatus)}</span></div>
-                        <div className={styles.summaryLine}><span>کد درخواست مایکا</span><strong>{draft.submittedReference}</strong></div>
-                        <p>درخواست در سامانه ثبت شده است. تأیید ظرفیت و معرفی مراقب در مرحله بررسی انجام می‌شود.</p>
-                      </article>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {serverRequests.length === 0 && drafts.length === 0 && (
-                <div className={styles.emptyState}>
-                  <span><ClipboardList size={28} /></span><h2>هنوز درخواستی ثبت نکرده‌اید.</h2>
-                  <p>درخواست خدمت را مرحله‌به‌مرحله آماده کنید؛ سپس می‌توانید آن را به سامانه مایکا ارسال کنید.</p>
-                  <Link href="/request/new" className={styles.primaryButton}>شروع درخواست جدید</Link>
-                </div>
-              )}
-            </>
+            orders.length > 0 ? (
+              <section className={styles.draftList}>
+                {orders.map((item, index) => {
+                  const pricing = item.pricing_snapshot && typeof item.pricing_snapshot === "object"
+                    ? item.pricing_snapshot as Record<string, unknown> : {};
+                  const reference = String(item.reference ?? "");
+                  return (
+                    <article className={styles.draftCard} key={String(item.id ?? reference ?? index)}>
+                      <div className={styles.draftTopline}>
+                        <strong>{String(pricing.package_title ?? serviceTitleFor(item.category_id, item.service_slug))}</strong>
+                        <span className={styles.submittedStatus}>{statusTitle(item.status)}</span>
+                      </div>
+                      <p>{serviceTitleFor(item.category_id, item.service_slug)} · {String(item.city ?? "—")}</p>
+                      <div className={styles.summaryLine}><span>کد پیگیری</span><strong>{reference}</strong></div>
+                      <div className={styles.summaryLine}><span>تاریخ ثبت</span><strong>{typeof item.created_at === "string" ? new Date(item.created_at).toLocaleString("fa-IR") : "—"}</strong></div>
+                      <div className={styles.summaryLine}><span>وضعیت پرداخت</span><strong>{paymentTitle(item.payment_status)}</strong></div>
+                      <div className={styles.summaryLine}><span>روش پرداخت</span><strong>هماهنگی تلفنی با مایکا</strong></div>
+                      {typeof pricing.total_estimate_rial === "number" && (
+                        <div className={styles.summaryLine}><span>برآورد اولیه</span><strong>{formatMillions(pricing.total_estimate_rial / 10_000_000)} میلیون تومان</strong></div>
+                      )}
+                      <Link href={"/track?reference=" + encodeURIComponent(reference)} className={styles.primaryButton}>پیگیری سفارش</Link>
+                    </article>
+                  );
+                })}
+              </section>
+            ) : (
+              <div className={styles.emptyState}>
+                <span><ClipboardList size={28} /></span><h2>هنوز سفارشی ثبت نکرده‌اید.</h2>
+                <p>پکیج موردنظر را انتخاب کنید و سفارش خود را در مایکا ثبت کنید.</p>
+                <Link href="/catalogs" className={styles.primaryButton}>مشاهده پکیج‌ها</Link>
+              </div>
+            )
           ) : (
             <div className={styles.emptyState}>
               <span><HeartHandshake size={28} /></span><h2>در حال حاضر خدمت فعالی برای نمایش وجود ندارد.</h2>
-              <p>این نسخه هنوز به تخصیص قطعی مراقب، حضور و غیاب یا گزارش‌های خدمت واقعی متصل نیست. پس از تأیید قرارداد و شروع خدمت، وضعیت آن در این بخش نمایش داده می‌شود.</p>
-              <Link href="/requests" className={styles.secondaryButton}>مشاهده درخواست‌های من</Link>
-              <Link href="/request/new" className={styles.primaryButton}>ثبت درخواست جدید</Link>
+              <p>پس از تأیید سفارش و شروع خدمت، وضعیت آن در این بخش نمایش داده می‌شود.</p>
+              <Link href="/requests" className={styles.secondaryButton}>مشاهده سفارش‌های من</Link>
+              <Link href="/catalogs" className={styles.primaryButton}>مشاهده پکیج‌ها</Link>
             </div>
           )}
       </div>
