@@ -1,5 +1,7 @@
 export type PricingPackage = {
   id: string;
+  detailId?: string;
+  requestService?: string;
   title: string;
   description: string;
   monthlySalaryMillion?: number;
@@ -49,12 +51,12 @@ export const pricingCatalogs: Record<string, PricingCatalog> = {
       { title: "همراهی و نظارت بر سالمند", description: "همراهی در طول روز، گفت‌وگو و ایجاد حس امنیت و نظارت بر شرایط سالمند." }
     ],
     packages: [
-      { id: "hamdam", title: "همدم", monthlySalaryMillion: 33, tag: "نیازهای سبک", description: "مناسب سالمندانی با نیازهای سبک‌تر؛ همراهی، نظارت کلی، کمک در کارهای روزمره و یادآوری مصرف داروها." },
-      { id: "hamrah", title: "همراه", monthlySalaryMillion: 41, tag: "نیازهای متوسط", description: "مناسب سالمندانی با نیازهای متوسط؛ کمک در جابه‌جایی، تحرک، استفاده از سرویس بهداشتی، استحمام و امور روزانه." },
-      { id: "hami", title: "حامی", monthlySalaryMillion: 26, tag: "نیازهای بیشتر", description: "مناسب سالمندانی با نیازهای سنگین‌تر و وابستگی بیشتر؛ کمک مستمر در مراقبت شخصی، جابه‌جایی، تغذیه و نظارت دقیق‌تر." },
-      { id: "aramyar", title: "آرامیار", monthlySalaryMillion: 50, tag: "پکیج تخصصی", description: "مناسب سالمندانی که با آلزایمر یا مشکلات شناختی و رفتاری روبه‌رو هستند و به همراهی ساختارمند و نظارت دقیق نیاز دارند." },
-      { id: "tavanyar", title: "توانیار", monthlySalaryMillion: 48, tag: "پکیج تخصصی", description: "مناسب سالمندانی با معلولیت، قطع عضو یا محدودیت‌های جسمی و حرکتی شدید که به کمک و پشتیبانی بیشتر نیاز دارند." },
-      { id: "custom", title: "خدمت اختصاصی", custom: true, tag: "طراحی متناسب با خانواده", description: "اگر نیاز خانواده خارج از پکیج‌های استاندارد است، مایکا امکان طراحی خدمت متناسب با شرایط شما را فراهم می‌کند." }
+      { id: "hamdam", detailId: "elder_hamdam", requestService: "independent", title: "همدم", monthlySalaryMillion: 33, tag: "نیازهای سبک", description: "مناسب سالمندانی با نیازهای سبک‌تر؛ همراهی، نظارت کلی، کمک در کارهای روزمره و یادآوری مصرف داروها." },
+      { id: "hamrah", detailId: "elder_hamrah", requestService: "semi-dependent", title: "همراه", monthlySalaryMillion: 41, tag: "نیازهای متوسط", description: "مناسب سالمندانی با نیازهای متوسط؛ کمک در جابه‌جایی، تحرک، استفاده از سرویس بهداشتی، استحمام و امور روزانه." },
+      { id: "hami", detailId: "elder_hami", requestService: "dependent", title: "حامی", monthlySalaryMillion: 46, tag: "نیازهای بیشتر", description: "مناسب سالمندانی با نیازهای سنگین‌تر و وابستگی بیشتر؛ کمک مستمر در مراقبت شخصی، جابه‌جایی، تغذیه و نظارت دقیق‌تر." },
+      { id: "aramyar", detailId: "elder_aramyar", requestService: "dependent", title: "آرامیار", monthlySalaryMillion: 50, tag: "پکیج تخصصی", description: "مناسب سالمندانی که با آلزایمر یا مشکلات شناختی و رفتاری روبه‌رو هستند و به همراهی ساختارمند و نظارت دقیق نیاز دارند." },
+      { id: "tavanyar", detailId: "elder_tavanyar", requestService: "dependent", title: "توانیار", monthlySalaryMillion: 48, tag: "پکیج تخصصی", description: "مناسب سالمندانی با معلولیت، قطع عضو یا محدودیت‌های جسمی و حرکتی شدید که به کمک و پشتیبانی بیشتر نیاز دارند." },
+      { id: "custom", requestService: "independent", title: "پکیج خودت را بساز", custom: true, tag: "سفارشی‌سازی", description: "نیازها و شرایط خانواده را مشخص کنید تا پکیج متناسب با شما طراحی شود." }
     ],
     rules: [
       "قیمت‌های پایه برای شیفت ۸ ساعته، از شنبه تا پنجشنبه تعریف شده‌اند.",
@@ -78,12 +80,12 @@ export const pricingCatalogs: Record<string, PricingCatalog> = {
       { title: "مراقبت، حضور و نظارت", description: "حضور فعال در کنار کودک برای حفظ ایمنی و ایجاد حس امنیت و آرامش." }
     ],
     packages: [
-      { id: "infant", title: "مراقبت از نوزاد", ageRange: "تا ۱۲ ماه", monthlySalaryMillion: 39, tag: "نوزاد", description: "مناسب نوزاد و مادر در ماه‌های اول؛ مراقبت روزمره، تغذیه، بهداشت، خواب و رسیدگی به امور مرتبط با نوزاد." },
-      { id: "toddler", title: "مراقبت از کودک", ageRange: "۲ تا ۴ سال", monthlySalaryMillion: 40, tag: "نوپا", description: "مناسب کودک نوپا با نیاز به مراقبت روزانه، تغذیه سالم، بازی، سرگرمی و رسیدگی به روتین‌های روزمره." },
-      { id: "preschool", title: "مراقبت از کودک", ageRange: "۴ تا ۶ سال", monthlySalaryMillion: 44, tag: "پیش‌دبستانی", description: "مناسب کودک پیش‌دبستانی؛ علاوه بر مراقبت روزانه، بازی هدفمند، تقویت مهارت‌های اولیه و نظم روزمره." },
-      { id: "school-age", title: "مراقبت کودک همراه آموزش", ageRange: "۶ تا ۱۲ سال", monthlySalaryMillion: 50, tag: "پکیج تخصصی", description: "مناسب کودک دبستانی؛ مراقبت روزانه، همراهی در تکالیف و برنامه‌های منظم، تغذیه سالم و نظارت." },
-      { id: "pregnancy", title: "همراهی دوران بارداری", monthlySalaryMillion: 37, tag: "مادر و کودک", description: "همراهی و کمک غیرپزشکی به مادر در امور روزمره، آماده‌سازی غذای مناسب و همراهی در مراجعات موردنیاز." },
-      { id: "custom", title: "خدمت اختصاصی", custom: true, tag: "طراحی متناسب با خانواده", description: "برای شرایط خاص، سنین یا نیازهایی که در پکیج‌های استاندارد پوشش داده نشده‌اند، درخواست طراحی خدمت اختصاصی ثبت کنید." }
+      { id: "infant", detailId: "child_newborn", requestService: "infant-nurse", title: "مراقبت از نوزاد", ageRange: "تا ۱۲ ماه", monthlySalaryMillion: 39, tag: "نوزاد", description: "مناسب نوزاد و مادر در ماه‌های اول؛ مراقبت روزمره، تغذیه، بهداشت، خواب و رسیدگی به امور مرتبط با نوزاد." },
+      { id: "toddler", detailId: "child_2_4", requestService: "child-care", title: "مراقبت از کودک", ageRange: "۲ تا ۴ سال", monthlySalaryMillion: 40, tag: "نوپا", description: "مناسب کودک نوپا با نیاز به مراقبت روزانه، تغذیه سالم، بازی، سرگرمی و رسیدگی به روتین‌های روزمره." },
+      { id: "preschool", detailId: "child_4_6", requestService: "child-care", title: "مراقبت از کودک", ageRange: "۴ تا ۶ سال", monthlySalaryMillion: 44, tag: "پیش‌دبستانی", description: "مناسب کودک پیش‌دبستانی؛ علاوه بر مراقبت روزانه، بازی هدفمند، تقویت مهارت‌های اولیه و نظم روزمره." },
+      { id: "school-age", detailId: "child_6_12", requestService: "child-care", title: "مراقبت کودک همراه آموزش", ageRange: "۶ تا ۱۲ سال", monthlySalaryMillion: 50, tag: "پکیج تخصصی", description: "مناسب کودک دبستانی؛ مراقبت روزانه، همراهی در تکالیف و برنامه‌های منظم، تغذیه سالم و نظارت." },
+      { id: "pregnancy", detailId: "child_pregnancy", requestService: "mother-companion", title: "همراهی دوران بارداری", monthlySalaryMillion: 37, tag: "مادر و کودک", description: "همراهی و کمک غیرپزشکی به مادر در امور روزمره، آماده‌سازی غذای مناسب و همراهی در مراجعات موردنیاز." },
+      { id: "custom", requestService: "child-care", title: "پکیج خودت را بساز", custom: true, tag: "سفارشی‌سازی", description: "نیازها، سن و شرایط خانواده را مشخص کنید تا پکیج متناسب با شما طراحی شود." }
     ],
     rules: [
       "قیمت‌های پایه برای شیفت ۸ ساعته، از شنبه تا پنجشنبه تعریف شده‌اند.",

@@ -2,13 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 import {
   ArrowRight, Baby, CheckCircle2, ChevronLeft, HeartHandshake,
-  Home, PhoneCall, ShieldCheck, Sparkles, Utensils
+  Home, ShieldCheck, Sparkles, Utensils
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { commissionRates, type PricingCatalog } from "@/lib/pricing-data";
+import { commissionRates, type PricingCatalog, type PricingPackage } from "@/lib/pricing-data";
 
 function formatMillions(value: number) {
   return new Intl.NumberFormat("fa-IR", {
@@ -17,28 +16,23 @@ function formatMillions(value: number) {
   }).format(value);
 }
 
+function getPackageHref(catalog: PricingCatalog, item: PricingPackage) {
+  const categoryId = catalog.kind === "child" ? "12" : "11";
+  const service = item.requestService ?? (catalog.kind === "child" ? "child-care" : "independent");
+  if (item.custom) {
+    return `/request/new?category=${categoryId}&service=${service}&package=custom`;
+  }
+  return item.detailId ? `/package-ui/?product=${item.detailId}` : `/request/new?category=${categoryId}&service=${service}&package=${item.id}`;
+}
+
 export function PricingCatalogScreen({ catalog }: { catalog: PricingCatalog }) {
-  const firstPricedPackage = catalog.packages.find((item) => typeof item.monthlySalaryMillion === "number");
-  const [selectedPackageId, setSelectedPackageId] = useState(firstPricedPackage?.id ?? catalog.packages[0].id);
-  const [months, setMonths] = useState(1);
-  const selectedPackage = catalog.packages.find((item) => item.id === selectedPackageId) ?? catalog.packages[0];
-  const monthlySalary = selectedPackage.monthlySalaryMillion ?? 0;
-  const commissionPercent = commissionRates.find((item) => item.months === months)?.percent ?? 0;
-  const salarySubtotal = monthlySalary * months;
-  const commission = monthlySalary * commissionPercent / 100;
-  const estimatedTotal = salarySubtotal + commission;
-  const hasEstimate = typeof selectedPackage.monthlySalaryMillion === "number";
-  const requestService = catalog.kind === "child"
-    ? selectedPackage.id === "pregnancy" ? "mother-companion" : selectedPackage.id === "infant" ? "infant-nurse" : "child-care"
-    : "independent";
-  const requestHref = `/request/new?category=${catalog.kind === "child" ? "12" : "11"}&service=${requestService}&package=${selectedPackage.id}`;
   const sharedIcons = [Home, Utensils, HeartHandshake, ShieldCheck];
 
   return (
     <AppShell activeNav="home">
       <div className="pricing-catalog">
         <div className="catalog-back">
-          <Link href="/catalogs"><ArrowRight size={16} />بازگشت به کاتالوگ‌ها</Link>
+          <Link href="/"><ArrowRight size={16} />بازگشت به صفحه اصلی</Link>
         </div>
 
         <section className="pricing-hero">
@@ -53,51 +47,40 @@ export function PricingCatalogScreen({ catalog }: { catalog: PricingCatalog }) {
 
         <p className="pricing-intro">{catalog.summary}</p>
 
-        {catalog.kind === "child" && selectedPackage.id === "pregnancy" ? (
-          <section className="pricing-section">
-            <div className="pricing-section-heading">
-              <span>پکیج ویژه مادر</span>
-              <h2>همراهی غیرپزشکی در دوران بارداری</h2>
-              <p>این خدمت متناسب با نیاز مادر و خانواده تعریف می‌شود و جایگزین مراقبت یا خدمات پزشکی نیست.</p>
-            </div>
-          </section>
-        ) : (
-          <section className="pricing-section">
-            <div className="pricing-section-heading">
-              <span>{catalog.kind === "child" ? "خدمات پایه مراقبت کودک" : "خدمات پایه مشترک"}</span>
-              <h2>{catalog.kind === "child" ? "در پکیج‌های مراقبت کودک چه خدمات پایه‌ای ارائه می‌شود؟" : "در تمام پکیج‌ها چه خدماتی ارائه می‌شود؟"}</h2>
-            </div>
-            <div className="pricing-shared-grid">
-              {catalog.sharedServices.map((service, index) => {
-                const Icon = sharedIcons[index % sharedIcons.length];
-                return (
-                  <article className="pricing-shared-card" key={service.title}>
-                    <span className="pricing-shared-icon"><Icon size={19} /></span>
-                    <strong>{service.title}</strong>
-                    <p>{service.description}</p>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-        )}
+        <section className="pricing-section">
+          <div className="pricing-section-heading">
+            <span>{catalog.kind === "child" ? "خدمات پایه مراقبت کودک" : "خدمات پایه مشترک"}</span>
+            <h2>{catalog.kind === "child" ? "در پکیج‌های مراقبت کودک چه خدمات پایه‌ای ارائه می‌شود؟" : "در تمام پکیج‌ها چه خدماتی ارائه می‌شود؟"}</h2>
+          </div>
+          <div className="pricing-shared-grid">
+            {catalog.sharedServices.map((service, index) => {
+              const Icon = sharedIcons[index % sharedIcons.length];
+              return (
+                <article className="pricing-shared-card" key={service.title}>
+                  <span className="pricing-shared-icon"><Icon size={19} /></span>
+                  <strong>{service.title}</strong>
+                  <p>{service.description}</p>
+                </article>
+              );
+            })}
+          </div>
+        </section>
 
         <section className="pricing-section">
           <div className="pricing-section-heading">
             <span>انتخاب پکیج</span>
             <h2>کدام خدمت با نیاز خانواده شما هماهنگ‌تر است؟</h2>
-            <p>برای مشاهده برآورد، یکی از پکیج‌ها را انتخاب کنید.</p>
+            <p>یکی از پنج پکیج آماده را انتخاب کنید یا پکیج متناسب با نیاز خودتان را بسازید.</p>
           </div>
           <div className="pricing-package-grid">
             {catalog.packages.map((item) => {
-              const isSelected = item.id === selectedPackageId;
+              const href = getPackageHref(catalog, item);
               return (
-                <button
-                  type="button"
+                <Link
+                  href={href}
                   key={item.id}
-                  aria-pressed={isSelected}
-                  className={["pricing-package-card", item.custom ? "pricing-custom-card" : "", isSelected ? "selected" : ""].filter(Boolean).join(" ")}
-                  onClick={() => setSelectedPackageId(item.id)}
+                  aria-label={item.custom ? "ساخت پکیج اختصاصی" : `مشاهده جزئیات پکیج ${item.title}`}
+                  className={["pricing-package-card", item.custom ? "pricing-custom-card" : ""].filter(Boolean).join(" ")}
                 >
                   <span className="pricing-package-topline">
                     <span className="pricing-package-icon">{item.custom ? <Sparkles size={19} /> : catalog.kind === "child" ? <Baby size={19} /> : <HeartHandshake size={19} />}</span>
@@ -107,81 +90,22 @@ export function PricingCatalogScreen({ catalog }: { catalog: PricingCatalog }) {
                   {item.ageRange && <span className="pricing-package-age">{item.ageRange}</span>}
                   <p>{item.description}</p>
                   <span className="pricing-package-price">
-                    {typeof item.monthlySalaryMillion === "number" ? formatMillions(item.monthlySalaryMillion) + " میلیون تومان" : "قیمت‌گذاری اختصاصی"}
+                    {typeof item.monthlySalaryMillion === "number" ? formatMillions(item.monthlySalaryMillion) + " میلیون تومان" : "طراحی و قیمت‌گذاری اختصاصی"}
                   </span>
                   <span className="pricing-package-caption">
-                    {typeof item.monthlySalaryMillion === "number" ? "حقوق ماهانه مراقب" : "برای استعلام با مایکا تماس بگیرید"}
+                    {item.custom ? "ورود به سفارشی‌ساز مایکا" : "مشاهده جزئیات، خدمات و برآورد هزینه"}
                   </span>
-                </button>
+                </Link>
               );
             })}
           </div>
         </section>
 
-        {hasEstimate ? (
-          <section className="pricing-calculator" aria-live="polite">
-            <div className="pricing-calculator-heading">
-              <span>محاسبه‌گر قرارداد</span>
-              <h2>برآورد هزینه پکیج {selectedPackage.title}</h2>
-              <p>مدت قرارداد را انتخاب کنید تا مبلغ حقوق مراقب و کمیسیون یک‌باره مایکا محاسبه شود.</p>
-            </div>
-
-            <div className="pricing-calculator-field">
-              <strong>مدت قرارداد</strong>
-              <div className="pricing-term-options" role="group" aria-label="مدت قرارداد">
-                {commissionRates.map((item) => (
-                  <button
-                    type="button"
-                    key={item.months}
-                    aria-pressed={months === item.months}
-                    className={months === item.months ? "pricing-term-chip selected" : "pricing-term-chip"}
-                    onClick={() => setMonths(item.months)}
-                  >
-                    {formatMillions(item.months)} ماه
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="pricing-price-breakdown">
-              <div className="pricing-price-row">
-                <span>حقوق ماهانه مراقب</span>
-                <strong>{formatMillions(monthlySalary)} میلیون تومان</strong>
-              </div>
-              <div className="pricing-price-row">
-                <span>مجموع حقوق مراقب در {formatMillions(months)} ماه</span>
-                <strong>{formatMillions(salarySubtotal)} میلیون تومان</strong>
-              </div>
-              <div className="pricing-price-row">
-                <span>کمیسیون یک‌باره مایکا ({formatMillions(commissionPercent)}٪)</span>
-                <strong>{formatMillions(commission)} میلیون تومان</strong>
-              </div>
-              <div className="pricing-price-total">
-                <span>هزینه کل برآوردی قرارداد</span>
-                <strong>{formatMillions(estimatedTotal)} <small>میلیون تومان</small></strong>
-              </div>
-            </div>
-
-            <p className="pricing-calculator-note">
-              این برآورد بر پایه حقوق ماهانه پایه پکیج محاسبه شده است. هزینه شیفت شبانه‌روزی، حضور در روز جمعه و در کاتالوگ کودک، کودک اضافه، جداگانه به مبلغ قرارداد افزوده می‌شوند و در عدد بالا لحاظ نشده‌اند.
-            </p>
-            <Link href={requestHref} className="pricing-primary-cta" data-analytics="cta"><PhoneCall size={18} />ثبت سفارش این پکیج</Link>
-            <a href="tel:41124" className="pricing-calculator-note">سؤال دارید؟ تماس با مایکا · ۴۱۱۲۴</a>
-          </section>
-        ) : (
-          <section className="pricing-quote-card">
-            <strong>برای این خدمت، قیمت‌گذاری اختصاصی انجام می‌شود.</strong>
-            <p>شرایط خانواده و نیازهای خدمت را با کارشناسان مایکا مطرح کنید تا خدمت متناسب طراحی و هزینه آن اعلام شود.</p>
-            <Link href={requestHref} className="pricing-primary-cta"><PhoneCall size={18} />ثبت درخواست خدمت اختصاصی</Link>
-            <a href="tel:41124" className="pricing-calculator-note">تماس با مایکا · ۴۱۱۲۴</a>
-          </section>
-        )}
-
         <section className="pricing-section">
           <div className="pricing-section-heading">
             <span>کمیسیون شفاف</span>
             <h2>درصد کمیسیون بر اساس مدت قرارداد</h2>
-            <p>کمیسیون مایکا یک‌بار در هر قرارداد محاسبه و دریافت می‌شود.</p>
+            <p>کمیسیون مایکا یک‌بار در هر قرارداد محاسبه می‌شود.</p>
           </div>
           <div className="pricing-commission-grid">
             {commissionRates.map((item) => (
@@ -202,14 +126,14 @@ export function PricingCatalogScreen({ catalog }: { catalog: PricingCatalog }) {
             {catalog.rules.map((rule) => <li key={rule}><CheckCircle2 size={17} />{rule}</li>)}
           </ul>
           <div className="pricing-source-note">
-            مبالغ پکیج‌ها، حقوق ماهانه مراقب به میلیون تومان هستند و هزینه کل قرارداد برابر مجموع حقوق مراقب در مدت قرارداد به‌علاوه کمیسیون یک‌باره مایکا است. هزینه‌های افزوده طبق شرایط هر خدمت جداگانه محاسبه می‌شوند.
+            مبالغ پکیج‌ها، حقوق ماهانه مراقب به میلیون تومان هستند. برآورد نهایی با توجه به مدت قرارداد، نوع شیفت و شرایط خانواده در صفحه جزئیات هر پکیج نمایش داده می‌شود.
           </div>
         </section>
 
         <footer className="pricing-footer">
           <span>مایکا · همراه خانواده</span>
           <a href="tel:41124">۴۱۱۲۴ · تماس با مایکا</a>
-          <Link href="/catalogs"><ChevronLeft size={15} />سایر کاتالوگ‌ها</Link>
+          <Link href="/"><ChevronLeft size={15} />بازگشت به صفحه اصلی</Link>
         </footer>
       </div>
     </AppShell>
