@@ -3,15 +3,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowRight, ChevronLeft, Headset, Zap } from "lucide-react";
 import { AppShell, AuthGateModal } from "@/components/app-shell";
 import type { CategoryData, ServiceItem } from "@/lib/myca-data";
 
 export function CategoryScreen({ category }: { category: CategoryData }) {
+  const router = useRouter();
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
 
   function selectService(service: ServiceItem) {
+    if (service.href) { router.push(service.href); return; }
     if (service.options?.length) setSelectedService(service);
     else setAuthOpen(true);
   }
