@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ChevronLeft, Headset, Zap } from "lucide-react";
+import { ArrowRight, BookOpen, ChevronLeft, Headset, Zap } from "lucide-react";
 import { AppShell, AuthGateModal } from "@/components/app-shell";
 import type { CategoryData, ServiceItem } from "@/lib/myca-data";
 
@@ -47,6 +47,12 @@ export function CategoryScreen({ category }: { category: CategoryData }) {
         <span className="row-chevron"><ChevronLeft size={20} /></span>
       </button>)}
     </section>
+
+    {category.id === "11" && <Link href="/catalogs/elders-pricing" className="category-action support-action" dir="ltr">
+      <span className="category-action-icon"><BookOpen size={22} /></span>
+      <span className="category-action-copy" dir="rtl"><strong>پکیج‌های سالمندی و برآورد هزینه</strong><small>مقایسه پکیج‌های عمومی و تخصصی</small></span>
+      <ChevronLeft size={20} className="action-chevron" />
+    </Link>}
 
     <button type="button" className="category-action urgent-action" dir="ltr" onClick={() => setAuthOpen(true)}>
       <span className="category-action-icon urgent-icon"><Zap size={22} /></span>
