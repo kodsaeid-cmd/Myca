@@ -15,7 +15,7 @@ export function CategoryScreen({ category }: { category: CategoryData }) {
 
   function selectService(service: ServiceItem) {
     if (service.href) { router.push(service.href); return; }
-    if (service.requiresAuthOnSelect) { setAuthOpen(true); return; }
+    if (service.requiresAuthOnSelect || !service.options?.length) { setAuthOpen(true); return; }
     setSelectedService(service);
   }
 

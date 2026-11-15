@@ -35,7 +35,7 @@ export const categories: Record<string, CategoryData> = {
       { slug: "mother-companion", title: "مادریار", description: "همراهی مادر در دوره پس از زایمان", icon: "mother-child.svg" },
       { slug: "child-care", title: "کودکیار", description: "نگهداری و همراهی کودک در منزل", icon: "mother-child.svg" },
       { slug: "psychologist", title: "روانشناس", description: "روانشناس به عنوان خدمتی برای کودکان در نظر گرفته شده است.", icon: "psychologist.svg" },
-      { slug: "child-care-package", title: "پکیج مراقبت کودک", description: "پکیج‌های مراقبت کودک و مادر", icon: "mother-child.svg" }
+      { slug: "child-care-package", title: "پکیج مراقبت کودک", description: "پکیج‌های مراقبت کودک و مادر", icon: "mother-child.svg", href: "/catalogs/pedia" }
     ]
   },
   "13": {
