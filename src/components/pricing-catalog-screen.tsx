@@ -51,8 +51,8 @@ export function PricingCatalogScreen({ catalog }: { catalog: PricingCatalog }) {
 
         <section className="pricing-section">
           <div className="pricing-section-heading">
-            <span>خدمات پایه مشترک</span>
-            <h2>در تمام پکیج‌ها چه خدماتی ارائه می‌شود؟</h2>
+            <span>{catalog.kind === "child" ? "خدمات پایه مراقبت کودک" : "خدمات پایه مشترک"}</span>
+            <h2>{catalog.kind === "child" ? "در پکیج‌های مراقبت کودک چه خدمات پایه‌ای ارائه می‌شود؟" : "در تمام پکیج‌ها چه خدماتی ارائه می‌شود؟"}</h2>
           </div>
           <div className="pricing-shared-grid">
             {catalog.sharedServices.map((service, index) => {
