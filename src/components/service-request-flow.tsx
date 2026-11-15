@@ -336,9 +336,6 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
               <div className={styles.packageSection}>
                 <div className={styles.sectionSubheading}><h3>پکیج موردنظر</h3><span>الزامی برای ثبت سفارش</span></div>
                 <div className={styles.packageGrid}>
-                  <button type="button" onClick={() => setPackageId("")} className={!packageId ? styles.packageSelected : styles.packageCard}>
-                    <strong>هنوز انتخاب نکرده‌ام</strong><small>مایکا در انتخاب پکیج مناسب راهنمایی می‌کند.</small>
-                  </button>
                   {availablePackages.map((item) => (
                     <button type="button" key={item.id} onClick={() => setPackageId(item.id)}
                       className={packageId === item.id ? styles.packageSelected : styles.packageCard}>
