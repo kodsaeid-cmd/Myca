@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Check, ShieldCheck } from "lucide-react";
 import { roleTitles } from "@/lib/catalog-data";
 
@@ -15,7 +15,16 @@ const roleAccess: Record<string, string[]> = {
 
 export function LoginScreen({ role, next }: { role: string; next?: string }) {
   const title = roleTitles[role] || "خدمت گیرنده";
+  const [nextPath, setNextPath] = useState(next);
   const [mode, setMode] = useState<"otp" | "password">("otp");
+
+  useEffect(() => {
+    if (nextPath) return;
+    const candidate = new URLSearchParams(window.location.search).get("next");
+    if (candidate && candidate.startsWith("/") && !candidate.startsWith("//") && !candidate.includes("\\")) {
+      setNextPath(candidate);
+    }
+  }, [nextPath]);
   const [accepted, setAccepted] = useState(false);
   const [employee, setEmployee] = useState(false);
   const [personType, setPersonType] = useState<"individual" | "legal">("individual");
@@ -83,8 +92,8 @@ export function LoginScreen({ role, next }: { role: string; next?: string }) {
         return;
       }
 
-      const destination = next && next.startsWith("/") && !next.startsWith("//") && !next.includes("\\")
-        ? next
+      const destination = nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//") && !nextPath.includes("\\")
+        ? nextPath
         : role === "provider" ? "/provider/apply" : "/";
       window.location.assign(destination);
     } catch {

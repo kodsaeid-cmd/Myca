@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, ClipboardList, PhoneCall, Search, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
@@ -37,6 +37,12 @@ export function OrderTrackingScreen({ initialReference = "" }: { initialReferenc
   const [order, setOrder] = useState<TrackingOrder | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (initialReference) return;
+    const queryReference = new URLSearchParams(window.location.search).get("reference");
+    if (queryReference) setReference(queryReference);
+  }, [initialReference]);
 
   async function trackOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

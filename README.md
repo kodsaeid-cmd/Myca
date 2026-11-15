@@ -1,42 +1,38 @@
 # MYCA
 
-A faithful, independently implemented replica of the public MYCA web experience.
+A faithful, independently implemented replica of the public MYCA web experience, with the first-phase package-order workflow.
 
-## Stack
+## Product stack
 
-- Next.js 15 App Router
-- React 19 + TypeScript
+- Next.js 15 App Router and React 19
 - Persian-first RTL interface
-- CSS-based replica styling, with a mobile-first 393px content rail
+- CSS-based replica styling and mobile-first 393px content rail
 - Lucide icons and original publicly accessible MYCA image assets
+- Supabase Auth + PostgreSQL/PostgREST for identity and transactional data
 
-## Implemented in the first pass
+## Main capabilities in the current branch
 
-- Homepage hero, service discovery cards, search suggestions, consultation and request cards
-- Shared sticky header and bottom navigation
-- Slide-out navigation drawer
-- Service-location dialog with search suggestions, manual address editing and current-location permission flow
-- Public service categories: elderly care, child care, patient care, home services, corporate services, specialist care
-- Elder-independent and infant-nurse service detail pages
-- Receiver, provider, collaborator, recruitment-partner and support-office login shells
-- Catalog list and web page viewers
-- Interactive elderly-care and child-care pricing catalogs with contract-term commission estimator
+- Public home, service categories, service details and package catalogs
+- Customer OTP login and profile
+- Package order submission with a unique MYCA tracking reference
+- Customer order list and public order tracking by reference + verified phone
+- Admin dashboard for order status, phone-coordinated payment status and paid amounts
+- First-party analytics for page views, phone clicks, CTA clicks, button clicks and link clicks
 
-## Development
+## Deployment branches
+
+- `main`: canonical Next.js application with server-side Next route handlers.
+- `parspack-preview`: ParsPack-compatible static export plus PHP 8.3 API router. This branch is intended for a separate test subdomain and does not alter the existing magazine or shop document roots.
+
+See [docs/parspack-preview.md](docs/parspack-preview.md) for the ParsPack package, configuration and deployment steps.
+
+## Local development
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Reference and implementation notes
+## Reference
 
-The live public website at https://mycaapp.com is the visual and behavioral reference for the public-page replica. Publicly visible copy, navigation, interactions and image assets are being recreated; private server-side behavior and authenticated data are not copied.
-
-The supplied MYCA Design Language v1.0 is the canonical design-system reference for product surfaces. Shared tokens now use its documented palette. Where the live public website visibly differs, this replica follows the live site for public-page fidelity and records the difference for later reconciliation.
-
-See [docs/replica-audit.md](docs/replica-audit.md) for inspected routes, interaction notes and remaining gaps.
-
-## Status
-
-Phase 1 public shell and first public routes are committed. The authentication and request flows are UI-only until the appropriate backend endpoints are provided.
+The live public website at https://mycaapp.com is the visual and behavioral reference for the public-page replica. The supplied MYCA Design Language v1.0 is the canonical design-system reference for product surfaces.

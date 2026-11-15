@@ -1,9 +1,10 @@
-name: MYCA build
+name: MYCA build and ParsPack package
+
 on:
   push:
-    branches: [main]
+    branches: [main, parspack-preview]
   pull_request:
-    branches: [main]
+    branches: [main, parspack-preview]
 
 jobs:
   build:
@@ -15,9 +16,40 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, mbstring
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Lint
         run: npm run lint
-      - name: Build application
+      - name: Validate ParsPack API syntax
+        run: php -l public/api/index.php
+      - name: Build static website
         run: npm run build
+      - name: Ensure Apache and PHP runtime files are in export
+        run: |
+          mkdir -p out/api
+          cp public/.htaccess out/.htaccess
+          cp public/robots.txt out/robots.txt
+          cp public/api/index.php out/api/index.php
+      - name: Package ParsPack preview
+        if: github.ref == 'refs/heads/parspack-preview'
+        run: |
+          rm -rf package myca-parspack-preview.zip
+          mkdir -p package/public package/private
+          cp -a out/. package/public/
+          cp deploy/parspack/private/config.example.php package/private/config.example.php
+          cp docs/parspack-preview.md package/README.md
+          (cd package && zip -qr ../myca-parspack-preview.zip .)
+      - name: Upload ParsPack package
+        if: github.ref == 'refs/heads/parspack-preview'
+        uses: actions/upload-artifact@v4
+        with:
+          name: myca-parspack-preview
+          path: myca-parspack-preview.zip
+          if-no-files-found: error
+          retention-days: 14

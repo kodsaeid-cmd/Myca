@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "مایکا",
   description: "مراقبت مطمئن در خانه؛ انتخاب سریع و شفاف برای خانواده شما.",
   applicationName: "مایکا",
+  robots: { index: false, follow: false },
   icons: { icon: "https://mycaapp.com/icon.png" }
 };
 

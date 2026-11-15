@@ -3,7 +3,10 @@ node_modules
 out
 build
 coverage
+package
+myca-parspack-preview.zip
 .env*
 !.env.example
 .DS_Store
 *.log
+deploy/parspack/private/config.php

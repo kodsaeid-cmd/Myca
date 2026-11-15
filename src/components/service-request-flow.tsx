@@ -90,7 +90,7 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
-  const urgent = initial.urgent === "1";
+  const [urgent, setUrgent] = useState(initial.urgent === "1");
 
   const category = categories[categoryId] ?? categories["11"];
   const service = category.services.find((item) => item.slug === serviceSlug) ?? category.services[0];
@@ -122,6 +122,24 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
   useEffect(() => {
     if (!shifts.includes(shift)) setShift(shifts[0] ?? "نیاز به هماهنگی");
   }, [shifts, shift]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requestedCategory = params.get("category");
+    const requestedService = params.get("service");
+    if (requestedCategory && categories[requestedCategory]) {
+      const nextCategory = categories[requestedCategory];
+      setCategoryId(requestedCategory);
+      setServiceSlug(nextCategory.services.some((item) => item.slug === requestedService)
+        ? requestedService!
+        : nextCategory.services[0].slug);
+    }
+    const requestedPackage = params.get("package");
+    if (requestedPackage) setPackageId(requestedPackage);
+    const requestedShift = params.get("shift");
+    if (requestedShift) setShift(requestedShift);
+    setUrgent(params.get("urgent") === "1");
+  }, []);
 
   useEffect(() => {
     let active = true;
