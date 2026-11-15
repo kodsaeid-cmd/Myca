@@ -24,7 +24,7 @@ export type RequestDraft = {
   estimatedTotalMillion?: number; status: "draft";
 };
 
-type InitialRequest = { category?: string; service?: string; shift?: string; urgent?: string };
+type InitialRequest = { category?: string; service?: string; package?: string; shift?: string; urgent?: string };
 
 function formatMillions(value: number) {
   return new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 2 }).format(value);
@@ -56,7 +56,7 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
   const [serviceSlug, setServiceSlug] = useState(
     firstCategory.services.some((item) => item.slug === initial.service) ? initial.service! : firstCategory.services[0].slug
   );
-  const [packageId, setPackageId] = useState("");
+  const [packageId, setPackageId] = useState(initial.package ?? "");
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
   const [savedDraftId, setSavedDraftId] = useState("");
@@ -80,13 +80,21 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
   const category = categories[categoryId] ?? categories["11"];
   const service = category.services.find((item) => item.slug === serviceSlug) ?? category.services[0];
   const catalog = getCategoryCatalog(categoryId, serviceSlug);
+  const availablePackages = catalog?.packages.filter((item) => {
+    if (catalog.kind !== "child") return true;
+    if (serviceSlug === "mother-companion") return ["pregnancy", "custom"].includes(item.id);
+    if (serviceSlug === "infant-nurse" || categoryId === "27") return ["infant", "custom"].includes(item.id);
+    if (serviceSlug === "child-care") return ["toddler", "preschool", "school-age", "custom"].includes(item.id);
+    return true;
+  }) ?? [];
   const selectedPackage = catalog?.packages.find((item) => item.id === packageId);
   const shifts = useMemo(() => shiftChoices(category, serviceSlug), [category, serviceSlug]);
   const isChild = categoryId === "12" || categoryId === "27";
+  const isChildCare = isChild && serviceSlug !== "mother-companion";
   const isElder = categoryId === "11" || categoryId === "22";
   const commissionPercent = commissionRates.find((item) => item.months === months)?.percent ?? 0;
   const baseMonthlySalary = selectedPackage?.monthlySalaryMillion;
-  const extraChildPercent = isChild ? Math.max(0, Number(childCount) - 1) * 25 : 0;
+  const extraChildPercent = isChildCare ? Math.max(0, Number(childCount) - 1) * 25 : 0;
   const roundTheClockPercent = shift === "شبانه‌روزی" ? 35 : 0;
   const surchargePercent = extraChildPercent + roundTheClockPercent;
   const adjustedMonthlySalary = typeof baseMonthlySalary === "number"
@@ -119,7 +127,7 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
 
   function validateCurrentStep() {
     if (step === 0 && (!categoryId || !serviceSlug)) return "ابتدا دسته خدمت و نوع خدمت را انتخاب کنید.";
-    if (step === 1 && isChild && !recipientAge.trim()) return "سن کودک را وارد کنید تا نیازسنجی دقیق‌تر انجام شود.";
+    if (step === 1 && isChildCare && !recipientAge.trim()) return "سن کودک را وارد کنید تا نیازسنجی دقیق‌تر انجام شود.";
     if (step === 2 && (!startDate || !shift || !startTime)) return "تاریخ شروع، شیفت و ساعت شروع را مشخص کنید.";
     if (step === 3) {
       if (!requesterName.trim()) return "نام درخواست‌کننده را وارد کنید.";
@@ -241,7 +249,7 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
                   <button type="button" onClick={() => setPackageId("")} className={!packageId ? styles.packageSelected : styles.packageCard}>
                     <strong>هنوز انتخاب نکرده‌ام</strong><small>مایکا در انتخاب پکیج مناسب راهنمایی می‌کند.</small>
                   </button>
-                  {catalog.packages.map((item) => (
+                  {availablePackages.map((item) => (
                     <button type="button" key={item.id} onClick={() => setPackageId(item.id)}
                       className={packageId === item.id ? styles.packageSelected : styles.packageCard}>
                       <strong>{item.title}</strong>{item.ageRange && <small>{item.ageRange}</small>}
@@ -264,13 +272,13 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
             <div className={styles.formGrid}>
               <label className={styles.field}><span>نام خدمت‌گیرنده <small>اختیاری</small></span>
                 <input value={recipientName} onChange={(event) => setRecipientName(event.target.value)} placeholder="نام فرد دریافت‌کننده خدمت" /></label>
-              <label className={styles.field}><span>{isChild ? "سن کودک" : "سن خدمت‌گیرنده"} {isChild && <small>الزامی</small>}</span>
+              <label className={styles.field}><span>{isChildCare ? "سن کودک" : "سن خدمت‌گیرنده"} {isChildCare && <small>الزامی</small>}</span>
                 <input type="number" min="0" max="120" value={recipientAge} onChange={(event) => setRecipientAge(event.target.value)} placeholder={isChild ? "مثلاً ۳ سال" : "مثلاً ۷۸ سال"} /></label>
               {isElder && <label className={styles.field}><span>وضعیت استقلال سالمند</span>
                 <select value={dependency} onChange={(event) => setDependency(event.target.value)}>
                   <option value="">انتخاب کنید</option><option value="مستقل">مستقل</option><option value="نیمه‌وابسته">نیمه‌وابسته</option><option value="وابسته">وابسته</option>
                 </select></label>}
-              {isChild && <label className={styles.field}><span>تعداد کودکانی که مراقبت می‌خواهند</span>
+              {isChildCare && <label className={styles.field}><span>تعداد کودکانی که مراقبت می‌خواهند</span>
                 <select value={childCount} onChange={(event) => setChildCount(event.target.value)}>
                   <option value="1">۱ کودک</option><option value="2">۲ کودک</option><option value="3">۳ کودک</option><option value="4">۴ کودک</option>
                 </select></label>}
@@ -336,7 +344,7 @@ export function ServiceRequestFlow({ initial }: { initial: InitialRequest }) {
               {recipientName && <div className={styles.summaryLine}><span>خدمت‌گیرنده</span><strong>{recipientName}</strong></div>}
               {recipientAge && <div className={styles.summaryLine}><span>سن</span><strong>{formatMillions(Number(recipientAge))}</strong></div>}
               {dependency && <div className={styles.summaryLine}><span>وضعیت سالمند</span><strong>{dependency}</strong></div>}
-              {isChild && <div className={styles.summaryLine}><span>تعداد کودک</span><strong>{formatMillions(Number(childCount))}</strong></div>}
+              {isChildCare && <div className={styles.summaryLine}><span>تعداد کودک</span><strong>{formatMillions(Number(childCount))}</strong></div>}
               <div className={styles.summaryLine}><span>شیفت</span><strong>{shift}</strong></div>
               <div className={styles.summaryLine}><span>شروع</span><strong>{startDate} · {startTime}</strong></div>
               <div className={styles.summaryLine}><span>مدت</span><strong>{formatMillions(months)} ماه</strong></div>
