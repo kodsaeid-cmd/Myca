@@ -1,5 +1,5 @@
 export type ServiceOption = { title: string; description?: string };
-export type ServiceItem = { slug: string; title: string; description: string; icon: string; href?: string; options?: ServiceOption[] };
+export type ServiceItem = { slug: string; title: string; description: string; icon: string; href?: string; requiresAuthOnSelect?: boolean; options?: ServiceOption[] };
 export type CategoryData = {
   id: string; title: string; hero: string; headline: string; subheadline: string;
   supportingText?: string; urgentLabel: string; services: ServiceItem[];
@@ -32,12 +32,8 @@ export const categories: Record<string, CategoryData> = {
         { title: "روزانه", description: "این خدمت برای پرستاری از نوزادان تا ۲ سالگی در نظر گرفته شده است." },
         { title: "شبانه", description: "حضور و مراقبت در شب" }, { title: "شبانه‌روزی", description: "مراقبت ۲۴ ساعته در منزل" }
       ] },
-      { slug: "mother-companion", title: "مادریار", description: "همراهی مادر در دوره پس از زایمان", icon: "mother-child.svg", options: [
-        { title: "روزانه", description: "همراهی مادر در دوره پس از زایمان" }, { title: "شبانه‌روزی", description: "همراهی و مراقبت در منزل" }
-      ] },
-      { slug: "child-care", title: "کودکیار", description: "نگهداری و همراهی کودک در منزل", icon: "mother-child.svg", options: [
-        { title: "روزانه", description: "نگهداری و همراهی کودک در منزل" }, { title: "شبانه", description: "مراقبت از کودک در ساعات شب" }, { title: "شبانه‌روزی", description: "مراقبت ۲۴ ساعته در منزل" }
-      ] },
+      { slug: "mother-companion", title: "مادریار", description: "همراهی مادر در دوره پس از زایمان", icon: "mother-child.svg" },
+      { slug: "child-care", title: "کودکیار", description: "نگهداری و همراهی کودک در منزل", icon: "mother-child.svg" },
       { slug: "psychologist", title: "روانشناس", description: "روانشناس به عنوان خدمتی برای کودکان در نظر گرفته شده است.", icon: "psychologist.svg" },
       { slug: "child-care-package", title: "پکیج مراقبت کودک", description: "پکیج‌های مراقبت کودک و مادر", icon: "mother-child.svg" }
     ]
@@ -47,9 +43,7 @@ export const categories: Record<string, CategoryData> = {
     hero: "https://mycaapp.com/customer-home/myca-hero-patient-care-hijab.png",
     headline: "مراقبت تخصصی", subheadline: "در کنار بیمار، در منزل و مراکز درمانی", urgentLabel: "پرستار بیمار",
     services: [
-      { slug: "nursing-assistant", title: "کمک‌بهیار", description: "مشاهده جزئیات و انتخاب خدمت", icon: "certified-nurse.svg", options: [
-        { title: "روزانه", description: "مراقبت روزانه از بیمار" }, { title: "شبانه", description: "حضور و مراقبت در شب" }, { title: "شبانه‌روزی", description: "مراقبت شبانه‌روزی از بیمار" }
-      ] },
+      { slug: "nursing-assistant", title: "کمک‌بهیار", description: "مشاهده جزئیات و انتخاب خدمت", icon: "certified-nurse.svg" },
       { slug: "hourly-nurse", title: "نرس ساعتی", description: "این خدمت برای اعزام نرس‌ها به صورت ساعتی در نظر گرفته شده است.", icon: "certified-nurse.svg" },
       { slug: "one-time-nurse", title: "نرس موردی", description: "این خدمات برای ارائه خدمات نرسینگ مانند سرم‌تراپی، تزریقات و ... در نظر گرفته شده است.", icon: "certified-nurse.svg" },
       { slug: "hospital-companion", title: "همراه بیمار در بیمارستان", description: "همراه بیمار در بیمارستان به پرستاری گفته می‌شود که به جای خانواده بیمار در بیمارستان، به عنوان همراه بیمار به صورت ساعتی (شیفت ۲۴ ساعته) انجام وظیفه می‌کند.", icon: "hospital.svg" }
@@ -72,7 +66,7 @@ export const categories: Record<string, CategoryData> = {
     hero: "https://mycaapp.com/customer-home/myca-hero-corporate-hijab.png",
     headline: "خدمات منظم برای محیط کار", subheadline: "نیروی مورد اعتماد برای شرکت شما", urgentLabel: "خدمات شرکتی",
     services: [
-      { slug: "pantry", title: "آبدارچی", description: "اعزام آبدارچی برای شرکت‌ها", icon: "hot-beverage.svg" },
+      { slug: "pantry", title: "آبدارچی", description: "اعزام آبدارچی برای شرکت‌ها", icon: "hot-beverage.svg", requiresAuthOnSelect: true },
       { slug: "office-cleaning", title: "نظافت شرکت", description: "نظافت شرکت خدمتی است برای انجام تمیزکاری در شرکت‌ها که به صورت ساعتی انجام می‌شود.", icon: "cleaning-spray.svg" }
     ]
   },
@@ -81,7 +75,7 @@ export const categories: Record<string, CategoryData> = {
     hero: "https://mycaapp.com/customer-home/myca-hero-medical-hijab.png",
     headline: "خدمات پزشکی در دسترس", subheadline: "مشاهده و مقایسه خدمات تخصصی", urgentLabel: "پزشکی و پیراپزشکی",
     services: [
-      { slug: "laboratory", title: "آزمایشگاه", description: "با توجه به نوع آزمایش درخواستی موردی محاسبه می‌شود.", icon: "laboratory.svg" },
+      { slug: "laboratory", title: "آزمایشگاه", description: "با توجه به نوع آزمایش درخواستی موردی محاسبه می‌شود.", icon: "laboratory.svg", requiresAuthOnSelect: true },
       { slug: "physiotherapy", title: "فیزیوتراپی", description: "فیزیوتراپی به صورت جلسه‌ای (موردی) محاسبه می‌شود.", icon: "physiotherapy.svg" },
       { slug: "specialist-doctor", title: "پزشک متخصص", description: "به صورت جلسه‌ای هر مراجعه (موردی) محاسبه می‌شود.", icon: "certified-nurse.svg" }
     ]
