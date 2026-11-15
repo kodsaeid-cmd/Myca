@@ -10,3 +10,5 @@ myca-parspack-preview.zip
 .DS_Store
 *.log
 deploy/parspack/private/config.php
+
+/private/config.php

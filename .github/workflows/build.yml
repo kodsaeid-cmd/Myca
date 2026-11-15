@@ -9,6 +9,19 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testroot
+          MYSQL_DATABASE: myca_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ptestroot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,6 +40,8 @@ jobs:
         run: npm run lint
       - name: Validate ParsPack API syntax
         run: php -l public/api/index.php
+      - name: Run PHP/MySQL integration test
+        run: bash tests/parspack-api-smoke.sh
       - name: Build static website
         run: npm run build
       - name: Ensure Apache and PHP runtime files are in export
