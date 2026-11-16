@@ -1,0 +1,54 @@
+name: MYCA v8.1 fixed-permissions patch
+
+on:
+  push:
+    branches:
+      - v81-fixed-permissions-20261116
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build minimal public patch with safe permissions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s public/package-ui/index.html
+          rm -rf package MYCA_v81_FIXED_PERMISSIONS_644.zip
+          mkdir -p package/package-ui
+          cp public/package-ui/index.html package/package-ui/index.html
+          find package -type d -exec chmod 755 {} +
+          find package -type f -exec chmod 644 {} +
+          (cd package && zip -X -r ../MYCA_v81_FIXED_PERMISSIONS_644.zip package-ui)
+          python - <<'PY'
+          import stat, zipfile
+          path = "MYCA_v81_FIXED_PERMISSIONS_644.zip"
+          with zipfile.ZipFile(path) as archive:
+              names = set(archive.namelist())
+              assert "package-ui/index.html" in names, names
+              info = archive.getinfo("package-ui/index.html")
+              mode = (info.external_attr >> 16) & 0xffff
+              assert stat.S_IMODE(mode) == 0o644, oct(mode)
+              for entry in archive.infolist():
+                  if entry.is_dir():
+                      dmode = (entry.external_attr >> 16) & 0xffff
+                      assert stat.S_IMODE(dmode) == 0o755, (entry.filename, oct(dmode))
+              content = archive.read("package-ui/index.html").decode("utf-8")
+              assert "location.href='/order-intake/?'+params.toString();" in content
+              assert "package=custom" in content
+          print("Archive validation passed: HTML 0644, directories 0755, custom package builder retained.")
+          PY
+
+      - name: Upload patch archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: MYCA_v81_FIXED_PERMISSIONS_644
+          path: MYCA_v81_FIXED_PERMISSIONS_644.zip
+          if-no-files-found: error
+          retention-days: 14
